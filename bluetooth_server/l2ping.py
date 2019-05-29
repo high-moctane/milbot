@@ -1,4 +1,4 @@
-import asyncio
+import subprocess
 
 import errors as err
 
@@ -15,7 +15,7 @@ class L2ping:
             raise(err.InvalidBDAddrError(bd_addr))
         self.bd_addr = bd_addr
 
-    async def run(self):
+    def run(self):
         """l2ping を実行する。
 
         戻り値:
@@ -23,13 +23,10 @@ class L2ping:
             見つからなかった場合     -> None
         """
 
-        proc = await asyncio.create_subprocess_shell(
-            "l2ping -c 1 {}".format(self.bd_addr)
-        )
+        proc = subprocess.run(["l2ping", "-c", "1", self.bd_addr])
         if proc.returncode != 0:
             return None
-        else:
-            return self.bd_addr
+        return self.bd_addr
 
     def _is_valid_bd_addr(self, bd_addr):
         if len(bd_addr) != 17:
