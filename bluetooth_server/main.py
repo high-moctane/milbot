@@ -7,4 +7,5 @@ if __name__ == "__main__":
     load_dotenv()
 
     # サーバをたてる
-    server.Server(server_name=os.getenv("SERVER_NAME"), port=os.getenv("PORT"))
+    server.Server(server_name=os.getenv("SERVER_NAME"),
+                  port=os.getenv("PORT")).run()
