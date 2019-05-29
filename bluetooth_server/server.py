@@ -24,8 +24,7 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
 
             # サーチする
-            s = search.Search(bd_addrs, max_workers=int(
-                os.getenv("MAX_WORKERS")))
+            s = search.Search(bd_addrs)
             exist_bd_addrs = s.run()
 
             # 返事する
