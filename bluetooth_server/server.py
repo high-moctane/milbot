@@ -29,7 +29,7 @@ class Handler(BaseHTTPRequestHandler):
             exist_bd_addrs = s.run()
 
             # 返事する
-            response_body = "\n".join(exist_bd_addrs)
+            response_body = "\n".join(exist_bd_addrs) + "\n"
             self.wfile.write(response_body.encode())
 
         except Exception:
