@@ -8,4 +8,4 @@ if __name__ == "__main__":
 
     # サーバをたてる
     server.Server(server_name=os.getenv("SERVER_NAME"),
-                  port=os.getenv("PORT")).run()
+                  port=int(os.getenv("PORT"))).run()
