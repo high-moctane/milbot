@@ -24,7 +24,7 @@ class L2ping:
         """
 
         proc = await asyncio.create_subprocess_shell(
-            f"l2ping -c 1 {self.bd_addr}"
+            "l2ping -c 1 {}".format(self.bd_addr)
         )
         if proc.returncode != 0:
             return None
