@@ -1,0 +1,5 @@
+certifi
+python-dotenv
+redis
+requests
+slackclient
