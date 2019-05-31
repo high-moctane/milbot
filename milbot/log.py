@@ -17,7 +17,8 @@ class Log:
         引数:
             message -- 内容
         """
-        self._print("Info", message)
+        mes = self._format("Info", message)
+        self._print(mes)
 
     @classmethod
     def error(self, message):
@@ -26,18 +27,21 @@ class Log:
         引数:
             message -- 内容
         """
-        self._print("Error", message)
-        self._send_slack_message("Error", message)
+        mes = self._format("Error", message)
+        self._print(mes)
+        self._send_slack_message(mes)
 
     @classmethod
     def fatal(self, message):
-        """プログラム続行不可能なときに使う。表示と Slack 投稿する。
+        """プログラム続行不可能なときに使う。表示と Slack 投稿し，bot を終了する。
 
         引数:
             message -- 内容
         """
-        self._print("Fatal", message)
-        self._send_slack_message("Fatal", message)
+        mes = self._format("Fatal", message)
+        self._print(mes)
+        self._send_slack_message(mes)
+        sys.exit(1)
 
     @classmethod
     def _format(self, level, message):
@@ -49,13 +53,13 @@ class Log:
         return now.strftime("%Y/%m/%d %H:%M:%S.%f")
 
     @classmethod
-    def _print(self, level, message):
-        print(self._format(level, message), file=sys.stderr)
+    def _print(self, message):
+        print(message, file=sys.stderr)
 
     @classmethod
-    def _send_slack_message(self, level, message):
+    def _send_slack_message(self, message):
         try:
             requests.post(self._url,
-                          json={"text": self._format(level, message)})
+                          json={"text": message})
         except Exception as e:
-            self._print(level, str(e))
+            self._print(self._format("error", str(e)))
