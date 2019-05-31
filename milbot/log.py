@@ -41,7 +41,6 @@ class Log:
         mes = self._format("Fatal", message)
         self._print(mes)
         self._send_slack_message(mes)
-        sys.exit(1)
 
     @classmethod
     def _format(self, level, message):

@@ -8,6 +8,7 @@ import requests
 import slack
 import urllib
 
+from log import Log
 import utils
 
 
@@ -73,12 +74,21 @@ redis_cli = redis.Redis(
 )
 
 # redis に {name: url} の dict 形式で保存をする
-tree_dict = redis_cli.hgetall("kitakunoki")
+try:
+    tree_dict = redis_cli.hgetall("kitakunoki")
+except Exception as e:
+    Log.fatal(str(e))
+    raise(e)
+
 
 # redis データがない場合取りに行く
 if tree_dict is None:
     index_url = "http://www.chiba-museum.jp/jyumoku2014/kensaku/namae.html"
-    resp = requests.get(index_url)
+    try:
+        resp = requests.get(index_url)
+    except Exception as e:
+        Log.error(str(e))
+
     resp.encoding = resp.apparent_encoding
     parser = Parser(index_url)
     parser.feed(resp.text)
