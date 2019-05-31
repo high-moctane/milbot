@@ -7,7 +7,7 @@ import utils
 
 
 @slack.RTMClient.run_on(event="message")
-def peng(**payload):
+async def peng(**payload):
     """ペンギン燃やし"""
 
     data = payload["data"]
@@ -24,7 +24,7 @@ def peng(**payload):
     else:
         return
 
-    web_client.chat_postMessage(
+    await web_client.chat_postMessage(
         channel=channel_id,
         text=mes
     )

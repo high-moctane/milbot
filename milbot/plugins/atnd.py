@@ -1,3 +1,4 @@
+import asyncio
 import os
 import re
 import redis
@@ -8,7 +9,7 @@ import utils
 
 
 @slack.RTMClient.run_on(event="message")
-def atnd(**payload):
+async def atnd(**payload):
     """出席管理"""
 
     data = payload["data"]
@@ -44,7 +45,7 @@ def atnd(**payload):
     else:
         return
 
-    web_client.chat_postMessage(
+    await web_client.chat_postMessage(
         channel=channel_id,
         text=mes
     )
