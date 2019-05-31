@@ -82,7 +82,7 @@ except Exception as e:
 
 
 # redis データがない場合取りに行く
-if tree_dict is None:
+if len(tree_dict) == 0:
     index_url = "http://www.chiba-museum.jp/jyumoku2014/kensaku/namae.html"
     try:
         resp = requests.get(index_url)
@@ -94,8 +94,8 @@ if tree_dict is None:
     parser.feed(resp.text)
     parser.close()
     for name, url in parser.data:
-        print(name, url)
         redis_cli.hset("kitakunoki", name, url)
+    Log.info("kitakunoki done")
 
 
 # ======================================================================
@@ -104,7 +104,7 @@ if tree_dict is None:
 
 
 @slack.RTMClient.run_on(event="message")
-def kitakunoki(**payload):
+async def kitakunoki(**payload):
     """ping に対して pong と返事する"""
 
     data = payload["data"]
@@ -116,26 +116,26 @@ def kitakunoki(**payload):
     ts = data.get("ts")
 
     if re.match(r"^milbot kitakunoki help", text, re.IGNORECASE):
-        web_client.chat_postMessage(
+        await web_client.chat_postMessage(
             channel=channel_id,
             text=help_message()
         )
     elif re.match(r"^(帰宅|きたく)の(木|き)$", text, re.IGNORECASE):
         # 日替わり帰宅の木をする
-        web_client.chat_postMessage(
+        await web_client.chat_postMessage(
             channel=channel_id,
             text=todays_kitakunoki()
         )
     elif re.match(r"(帰宅|きたく)の(木|き)の(苗|なえ)", text, re.IGNORECASE):
         # 帰宅の木の苗の絵文字をつける
-        web_client.reactions_add(
+        await web_client.reactions_add(
             channel=channel_id,
-            name="seeding",
+            name="seedling",
             timestamp=ts
         )
     elif re.match(r"(帰宅|きたく)の(木|き)", text, re.IGNORECASE):
         # ランダムな木のリアクションをする
-        web_client.reactions_add(
+        await web_client.reactions_add(
             channel=channel_id,
             name=random.choice(tree_emojis()),
             timestamp=ts

@@ -6,7 +6,7 @@ import utils
 
 
 @slack.RTMClient.run_on(event="message")
-def bot_exit(**payload):
+async def bot_exit(**payload):
     """bot を終了させる"""
 
     data = payload["data"]
@@ -17,7 +17,7 @@ def bot_exit(**payload):
     text = data.get("text")
 
     if re.match(r"^milbot exit help", text, re.IGNORECASE):
-        web_client.chat_postMessage(
+        await web_client.chat_postMessage(
             channel=channel_id,
             text="milbot を終了するコマンドです。\n気軽に実行しないでください。"
         )

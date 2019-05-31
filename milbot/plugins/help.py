@@ -5,7 +5,7 @@ import utils
 
 
 @slack.RTMClient.run_on(event="message")
-def help_func(**payload):
+async def help_func(**payload):
     """コマンド一覧をつくる"""
 
     data = payload["data"]
@@ -16,12 +16,12 @@ def help_func(**payload):
     text = data.get("text")
 
     if re.match(r"^milbot help hidden", text, re.IGNORECASE):
-        web_client.chat_postMessage(
+        await web_client.chat_postMessage(
             channel=channel_id,
             text=mes_hidden()
         )
     elif re.match(r"^milbot help", text, re.IGNORECASE):
-        web_client.chat_postMessage(
+        await web_client.chat_postMessage(
             channel=channel_id,
             text=mes()
         )

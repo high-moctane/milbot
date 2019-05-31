@@ -5,7 +5,7 @@ import utils
 
 
 @slack.RTMClient.run_on(event="message")
-def pong(**payload):
+async def pong(**payload):
     """ping に対して pong と返事する"""
 
     data = payload["data"]
@@ -16,7 +16,7 @@ def pong(**payload):
     text = data.get("text")
 
     if re.match(r"^milbot ping", text, re.IGNORECASE):
-        web_client.chat_postMessage(
+        await web_client.chat_postMessage(
             channel=channel_id,
             text="pong (｀･ω･´)"
         )
