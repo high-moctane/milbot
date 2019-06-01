@@ -142,11 +142,7 @@ def morphemes_to_str(morphemes):
 
 
 def verse_to_str(verse):
-    separator = " ／ "
-    ans = ""
-    for phrase in verse:
-        ans += morphemes_to_str(phrase) + separator
-    return ans[:-len(separator)]
+    return " ／ ".join(map(morphemes_to_str, verse))
 
 
 def find(morphemes, mora_len_list, jiritsugo_flags):
