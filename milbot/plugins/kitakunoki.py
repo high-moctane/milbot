@@ -67,7 +67,7 @@ class Parser(HTMLParser):
 
 
 redis_cli = redis.Redis(
-    host="localhost",
+    host=os.getenv("HOST_ADDRESS"),
     port=int(os.getenv("REDIS_PORT")),
     db=os.getenv("REDIS_DB"),
     decode_responses=True
@@ -151,7 +151,7 @@ def todays_kitakunoki():
     """今日の帰宅の木のメッセージを構築します"""
 
     redis_cli = redis.Redis(
-        host="localhost",
+        host=os.getenv("HOST_ADDRESS"),
         port=int(os.getenv("REDIS_PORT")),
         db=os.getenv("REDIS_DB"),
         decode_responses=True
