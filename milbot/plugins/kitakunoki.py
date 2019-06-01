@@ -105,7 +105,7 @@ if len(tree_dict) == 0:
 
 @slack.RTMClient.run_on(event="message")
 async def kitakunoki(**payload):
-    """ping に対して pong と返事する"""
+    """帰宅の木に反応する"""
 
     data = payload["data"]
     if utils.is_bot_message(data):
