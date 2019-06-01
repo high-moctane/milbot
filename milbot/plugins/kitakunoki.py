@@ -144,7 +144,7 @@ async def kitakunoki(**payload):
 
 def help_message():
     return """`帰宅の木` に反応して今日の帰宅の木をお知らせします。
-また `帰宅の木` が含まれるメッセージに絵文字をつけます。"""
+また `帰宅の木` が含まれるメッセージに絵文字をつけます(｀･ω･´)"""
 
 
 def todays_kitakunoki():

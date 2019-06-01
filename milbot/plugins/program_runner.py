@@ -116,7 +116,7 @@ async def bash(code):
 def bash_help():
     return """任意の bash スクリプトを実行する脆弱性です。
 `milbot bash` に続けてスクリプト本文を書いてください。
-スクリプト本文を Markdown のコードのように ``` で囲って書くのがおすすめです。
+スクリプト本文を Markdown のコードのように ``` で囲って書くのがおすすめです(｀･ω･´)
 """
 
 
@@ -127,5 +127,5 @@ async def python3(code):
 def python3_help():
     return """任意の python3 スクリプトを実行する脆弱性です。
 `milbot python3` に続けてスクリプト本文を書いてください。
-スクリプト本文を Markdown のコードのように ``` で囲って書くのがおすすめです。
+スクリプト本文を Markdown のコードのように ``` で囲って書くのがおすすめです(｀･ω･´)
 """

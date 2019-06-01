@@ -68,4 +68,4 @@ def fire_penguin(jackpot_prob):
 
 
 def help_message(jackpot_prob):
-    return f"当たりの確率は {jackpot_prob} です:fire::penguin::fire:"
+    return f"ペンギン燃やしゲームです(｀･ω･´)\n当たりの確率は {jackpot_prob} です:fire::penguin::fire:"

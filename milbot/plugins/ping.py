@@ -18,5 +18,5 @@ async def pong(**payload):
     if re.match(r"^milbot ping", text, re.IGNORECASE):
         await web_client.chat_postMessage(
             channel=channel_id,
-            text="pong (｀･ω･´)"
+            text="pong(｀･ω･´)"
         )

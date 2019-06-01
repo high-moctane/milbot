@@ -56,19 +56,19 @@ def add(text, redis_cli):
 
     elems = text.split()
     if len(elems) != 5:
-        return "不正な入力です\nusage: milbot atnd add name address"
+        return "不正な入力です(´･ω･｀)\nusage: milbot atnd add name address"
 
     name, bd_addr = elems[3], elems[4]
     if not is_valid_bd_addr(bd_addr):
-        return f"不正な Bluetooth アドレスです: {bd_addr}"
+        return f"不正な Bluetooth アドレスです(´･ω･｀)\n{bd_addr}"
 
     members = redis_cli.hkeys("atnd_members")
     if name in members:
-        return f"{name} は既に登録されています"
+        return f"{name} は既に登録されています(´･ω･｀)"
 
     redis_cli.hset("atnd_members", name, bd_addr)
 
-    return f"登録しました {name}: {bd_addr}"
+    return f"登録しました(｀･ω･´)\n{name}: {bd_addr}"
 
 
 def delete(text, redis_cli):
@@ -76,15 +76,15 @@ def delete(text, redis_cli):
 
     elems = text.split()
     if len(elems) != 4:
-        return "不正な入力です\nusage: milbot atnd delete name"
+        return "不正な入力です(´･ω･｀)\nusage: milbot atnd delete name"
 
     name = elems[3]
     members = redis_cli.hkeys("atnd_members")
     if name not in members:
-        return f"{name} はもともと登録されていません"
+        return f"{name} はもともと登録されていません(´･ω･｀)"
 
     redis_cli.hdel("atnd_members", name)
-    return f"{name} を削除しました"
+    return f"{name} を削除しました(｀･ω･´)"
 
 
 def show_list(redis_cli):
@@ -152,7 +152,7 @@ def is_valid_bd_addr(bd_addr):
 
 
 def help_message():
-    return """以下の機能があります。
+    return """以下の機能があります(｀･ω･´)
 `milbot atnd help`
     このメッセージを表示する。
 
