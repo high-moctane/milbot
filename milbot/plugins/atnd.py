@@ -21,7 +21,7 @@ async def atnd(**payload):
     text = data.get("text")
 
     redis_cli = redis.Redis(
-        host="localhost",
+        host=os.getenv("HOST_ADDRESS"),
         port=int(os.getenv("REDIS_PORT")),
         db=os.getenv("REDIS_DB"),
         decode_responses=True
