@@ -1,4 +1,5 @@
 certifi
+mecab-python3
 python-dotenv
 redis
 requests
