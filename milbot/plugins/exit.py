@@ -19,7 +19,7 @@ async def bot_exit(**payload):
     if re.match(r"^milbot exit help", text, re.IGNORECASE):
         await web_client.chat_postMessage(
             channel=channel_id,
-            text="milbot を終了するコマンドです。\n気軽に実行しないでください。"
+            text="milbot を終了するコマンドです(｀･ω･´)"
         )
     elif re.match(r"^milbot exit", text, re.IGNORECASE):
         web_client.chat_postMessage(

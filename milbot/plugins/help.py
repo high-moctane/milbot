@@ -28,7 +28,7 @@ async def help_func(**payload):
 
 
 def mes():
-    return """以下のコマンドを受け付けます (｀･ω･´)
+    return """以下のコマンドを受け付けます(｀･ω･´)
 `milbot help`
 `milbot help hidden`
 `milbot ping`
@@ -42,7 +42,7 @@ def mes():
 `帰宅の木`
 `milbot kitakunoki help`
 
-また以下の語句に反応します。
+また以下の語句に反応します(｀･ω･´)
 `帰宅の木`
 `帰宅の木の苗`
 575
@@ -52,7 +52,7 @@ def mes():
 
 
 def mes_hidden():
-    return """隠しコマンドです。絶対に実行しないでください (´･ω･｀)
+    return """隠しコマンドです。絶対に実行しないでください(´･ω･｀)
 `milbot exit`
 `milbot exit help`
 `milbot bash`
