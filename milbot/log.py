@@ -17,7 +17,7 @@ class Log:
         引数:
             message -- 内容
         """
-        mes = self._format("Info", message)
+        mes = self._format("INFO", message)
         self._print(mes)
 
     @classmethod
@@ -27,7 +27,7 @@ class Log:
         引数:
             message -- 内容
         """
-        mes = self._format("Error", message)
+        mes = self._format("ERROR", message)
         self._print(mes)
         self._send_slack_message(mes)
 
@@ -38,7 +38,7 @@ class Log:
         引数:
             message -- 内容
         """
-        mes = self._format("Fatal", message)
+        mes = self._format("FATAL", message)
         self._print(mes)
         self._send_slack_message(mes)
 
@@ -61,4 +61,4 @@ class Log:
             requests.post(self._url,
                           json={"text": message})
         except Exception as e:
-            self._print(self._format("error", str(e)))
+            self._print(self._format("ERROR", str(e)))
