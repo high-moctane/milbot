@@ -1,0 +1,13 @@
+[Unit]
+Description=milbot slack bot
+Documentation=https://github.com/high-moctane/milbot
+Requires=docker.service bluetooth_server.service milbot-redis.service
+After=bluetooth_server.service milbot-redis.service
+
+[Service]
+ExecStart=/usr/bin/docker run --rm --add-host=host_address:$(ip addr show eth0 | grep -o 'inet [0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | grep -o [0-9].*) milbot
+ExecReload=/usr/bin/docker stop milbot
+ExecStop=/usr/bin/docker stop milbot
+Restart=always
+
+[Install]
