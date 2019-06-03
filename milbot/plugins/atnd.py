@@ -102,9 +102,9 @@ def atnd_default(redis_cli):
     member_addr = redis_cli.hgetall("atnd_members")
     addr_member = {addr: member for addr, member in member_addr.items()}
     addrs_str = "\n".join(list(addr_member)) + "\n"
+    url = "http://" + os.getenv("HOST_ADDRESS") + ":" + os.getenv("ATND_PORT")
     try:
-        resp = requests.post(
-            "http://" + os.getenv("ATND_SERVER_NAME"), addrs_str)
+        resp = requests.post(url, addrs_str)
     except Exception as e:
         return f"エラーが発生しました(´･ω･｀)\n{e}"
     if resp.status_code != "200":
