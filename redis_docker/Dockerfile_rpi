@@ -1,5 +1,5 @@
 # milbot の image を使い回すので
-FROM balenalib/rpi-debian-python:3.7.2
+FROM balenalib/rpi-debian-python:3.7.3-stretch-build
 
 RUN apt-get update && \
     apt-get install -y redis-server
