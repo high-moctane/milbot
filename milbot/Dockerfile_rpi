@@ -1,15 +1,15 @@
-FROM balenalib/rpi-debian-python:3.7.2
+FROM balenalib/rpi-debian-python:3.7.3-stretch-build
 
 RUN apt-get update && \
-    apt-get install -y mecab mecab-ipadic redis-tools && \
+    apt-get install -y mecab libmecab-dev mecab-ipadic-utf8 swig redis-tools && \
     useradd -m admin
-USER admin
 
 WORKDIR /home/admin
 COPY . .
 
-RUN pip install --user -r requirements.txt
+RUN pip install -r requirements.txt
 
 ENV HOST_ADDRESS host_address
 
+USER admin
 CMD ["python3", "main.py"]
