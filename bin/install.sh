@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd /opt/milbot
+
 # milbot-redis のビルド
 echo "building milbot-redis"
 docker build -t milbot-redis -f milbot-redis/Dockerfile_rpi milbot-redis
@@ -21,7 +23,7 @@ echo "done"
 
 # service の有効化
 echo "enabling systemd services"
-systemd enable bluetooth_server
-systemd enable milbot-redis
-systemd enable milbot
+systemctl enable bluetooth_server
+systemctl enable milbot-redis
+systemctl enable milbot
 echo "done"

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd /opt/milbot
+
 # Systemd のサービスファイルの削除
 echo "removing systemd service files"
 rm /etc/systemd/bluetooth_server.service

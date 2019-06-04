@@ -1,5 +1,5 @@
 #!/bin/bash
 
-systemd start bluetooth_server
-systemd start milbot-redis
-systemd start milbot
+systemctl start bluetooth_server
+systemctl start milbot-redis
+systemctl start milbot
