@@ -107,7 +107,7 @@ def atnd_default(redis_cli):
         resp = requests.post(url, addrs_str)
     except Exception as e:
         return f"エラーが発生しました(´･ω･｀)\n{e}"
-    if resp.status_code != "200":
+    if resp.status_code != 200:
         return f"エラーが発生しました(´･ω･｀)\n{resp.text}"
     exist_addrs = resp.text.split()
 
