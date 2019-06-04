@@ -100,7 +100,7 @@ def atnd_default(redis_cli):
     """メンバーがいるかどうかを検索する"""
 
     member_addr = redis_cli.hgetall("atnd_members")
-    addr_member = {addr: member for addr, member in member_addr.items()}
+    addr_member = {addr: member for member, addr in member_addr.items()}
     addrs_str = "\n".join(list(addr_member)) + "\n"
     url = "http://" + os.getenv("HOST_ADDRESS") + ":" + os.getenv("ATND_PORT")
     try:
