@@ -41,6 +41,10 @@ async def atnd(**payload):
         mes = help_message()
     elif re.match(r"^milbot atnd", text, re.IGNORECASE):
         # 在室確認をする
+        await web_client.chat_postMessage(
+            channel=channel_id,
+            text="在室確認をします。しばらくお待ちください(｀･ω･´)"
+        )
         mes = atnd_default(redis_cli)
     else:
         return
