@@ -4,7 +4,7 @@ cd /opt/milbot
 
 # milbot-redis のビルド
 echo "building milbot-redis"
-docker build -t milbot-redis -f milbot-redis/Dockerfile_rpi milbot-redis
+docker build -t milbot-redis -f redis_docker/Dockerfile_rpi redis_docker
 docker run --name milbot-redis --memory=100m --memory-swappiness=0 -p 6379:6379 milbot-redis
 docker stop milbot-redis
 echo "done"
