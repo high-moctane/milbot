@@ -85,8 +85,6 @@ async def run(code, pre_filename, post_filename):
         post_filename -- subprocess.run に渡すコマンドのファイル名の後の部分
     """
 
-    loop = asyncio.get_event_loop()
-
     with tempfile.TemporaryDirectory() as d:
         with open(os.path.join(d, "main.sh"), "w") as f:
             f.write(code)
