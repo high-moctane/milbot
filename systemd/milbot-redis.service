@@ -2,6 +2,7 @@
 Description=milbot redis server daemon
 Documentation=https://github.com/high-moctane/milbot
 Requires=docker.service
+After=docker.service
 
 [Service]
 ExecStart=/usr/bin/docker start -a milbot-redis
