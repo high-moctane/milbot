@@ -7,7 +7,6 @@ After=docker.service
 
 [Service]
 ExecStart=/usr/bin/docker start milbot-redis
-ExecReload=/usr/bin/docker stop milbot-redis
 ExecStop=/usr/bin/docker stop milbot-redis
 Restart=always
 
