@@ -2,6 +2,7 @@ import MeCab
 import re
 import slack
 
+from log import Log
 import utils
 
 
@@ -17,12 +18,16 @@ async def fixed_verse(**payload):
     text = data.get("text")
     text = "".join(text.split())
 
-    m = message(text)
-    if m != "":
-        await web_client.chat_postMessage(
-            channel=channel_id,
-            text=m
-        )
+    try:
+        m = message(text)
+        if m != "":
+            await web_client.chat_postMessage(
+                channel=channel_id,
+                text=m
+            )
+    except Exception as e:
+        Log.error(e)
+        raise(e)
 
 
 jiritsugo = ["動詞", "形容詞", "形容動詞", "名詞", "連体詞", "副詞", "接続詞", "感動詞"]

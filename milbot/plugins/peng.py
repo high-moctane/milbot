@@ -3,6 +3,7 @@ import random
 import re
 import slack
 
+from log import Log
 import utils
 
 
@@ -24,10 +25,14 @@ async def peng(**payload):
     else:
         return
 
-    await web_client.chat_postMessage(
-        channel=channel_id,
-        text=mes
-    )
+    try:
+        await web_client.chat_postMessage(
+            channel=channel_id,
+            text=mes
+        )
+    except Exception as e:
+        Log.error(e)
+        raise(e)
 
 
 def jackpot_probability():

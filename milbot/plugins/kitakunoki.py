@@ -97,31 +97,35 @@ async def kitakunoki(**payload):
     text = data.get("text")
     ts = data.get("ts")
 
-    if re.match(r"^milbot kitakunoki help", text, re.IGNORECASE):
-        await web_client.chat_postMessage(
-            channel=channel_id,
-            text=help_message()
-        )
-    elif re.match(r"^(帰宅|きたく)の(木|き)$", text, re.IGNORECASE):
-        # 日替わり帰宅の木をする
-        await web_client.chat_postMessage(
-            channel=channel_id,
-            text=todays_kitakunoki()
-        )
-    elif re.match(r"(帰宅|きたく)の(木|き)の(苗|なえ)", text, re.IGNORECASE):
-        # 帰宅の木の苗の絵文字をつける
-        await web_client.reactions_add(
-            channel=channel_id,
-            name="seedling",
-            timestamp=ts
-        )
-    elif re.match(r"(帰宅|きたく)の(木|き)", text, re.IGNORECASE):
-        # ランダムな木のリアクションをする
-        await web_client.reactions_add(
-            channel=channel_id,
-            name=random.choice(tree_emojis()),
-            timestamp=ts
-        )
+    try:
+        if re.match(r"^milbot kitakunoki help", text, re.IGNORECASE):
+            await web_client.chat_postMessage(
+                channel=channel_id,
+                text=help_message()
+            )
+        elif re.match(r"^(帰宅|きたく)の(木|き)$", text, re.IGNORECASE):
+            # 日替わり帰宅の木をする
+            await web_client.chat_postMessage(
+                channel=channel_id,
+                text=todays_kitakunoki()
+            )
+        elif re.match(r"(帰宅|きたく)の(木|き)の(苗|なえ)", text, re.IGNORECASE):
+            # 帰宅の木の苗の絵文字をつける
+            await web_client.reactions_add(
+                channel=channel_id,
+                name="seedling",
+                timestamp=ts
+            )
+        elif re.match(r"(帰宅|きたく)の(木|き)", text, re.IGNORECASE):
+            # ランダムな木のリアクションをする
+            await web_client.reactions_add(
+                channel=channel_id,
+                name=random.choice(tree_emojis()),
+                timestamp=ts
+            )
+    except Exception as e:
+        Log.error(e)
+        raise(e)
 
 
 def help_message():

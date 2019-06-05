@@ -2,6 +2,7 @@ import re
 import slack
 import sys
 
+from log import Log
 import utils
 
 
@@ -17,13 +18,20 @@ async def bot_exit(**payload):
     text = data.get("text")
 
     if re.match(r"^milbot exit help", text, re.IGNORECASE):
-        await web_client.chat_postMessage(
-            channel=channel_id,
-            text="milbot を終了するコマンドです(｀･ω･´)"
-        )
+        try:
+            await web_client.chat_postMessage(
+                channel=channel_id,
+                text="milbot を終了するコマンドです(｀･ω･´)"
+            )
+        except Exception as e:
+            Log.error(e)
+            raise(e)
+
     elif re.match(r"^milbot exit", text, re.IGNORECASE):
-        web_client.chat_postMessage(
-            channel=channel_id,
-            text="milbot を終了します(｀-ω-´)zzZ"
-        )
-        sys.exit()
+        try:
+            web_client.chat_postMessage(
+                channel=channel_id,
+                text="milbot を終了します(｀-ω-´)zzZ"
+            )
+        finally:
+            sys.exit()
