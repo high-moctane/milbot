@@ -4,4 +4,4 @@ Documentation=https://github.com/high-moctane/milbot
 Requires=milbot-bluetooth.service milbot-redis.service milbot.service
 
 [Install]
-RequiredBy=default.target
+WantedBy=default.target
