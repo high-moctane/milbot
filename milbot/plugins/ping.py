@@ -1,6 +1,7 @@
 import re
 import slack
 
+from log import Log
 import utils
 
 
@@ -16,7 +17,11 @@ async def pong(**payload):
     text = data.get("text")
 
     if re.match(r"^milbot ping", text, re.IGNORECASE):
-        await web_client.chat_postMessage(
-            channel=channel_id,
-            text="pong(｀･ω･´)"
-        )
+        try:
+            await web_client.chat_postMessage(
+                channel=channel_id,
+                text="pong(｀･ω･´)"
+            )
+        except Exception as e:
+            Log.error(e)
+            raise(e)

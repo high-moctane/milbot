@@ -6,6 +6,7 @@ import slack
 import subprocess
 import tempfile
 
+from log import Log
 import utils
 
 
@@ -21,23 +22,27 @@ async def program_runner(**payload):
     channel_id = data.get("channel")
     text = data.get("text")
 
-    if re.match(r"^milbot bash help", text, re.IGNORECASE):
-        mes = bash_help()
-    elif re.match(r"^milbot bash", text, re.IGNORECASE):
-        ret = await bash(extract_code(text))
-        mes = message(*ret)
-    elif re.match(r"^milbot python3 help", text, re.IGNORECASE):
-        mes = python3_help()
-    elif re.match(r"^milbot python3", text, re.IGNORECASE):
-        ret = await python3(extract_code(text))
-        mes = message(*ret)
-    else:
-        return
+    try:
+        if re.match(r"^milbot bash help", text, re.IGNORECASE):
+            mes = bash_help()
+        elif re.match(r"^milbot bash", text, re.IGNORECASE):
+            ret = await bash(extract_code(text))
+            mes = message(*ret)
+        elif re.match(r"^milbot python3 help", text, re.IGNORECASE):
+            mes = python3_help()
+        elif re.match(r"^milbot python3", text, re.IGNORECASE):
+            ret = await python3(extract_code(text))
+            mes = message(*ret)
+        else:
+            return
 
-    await web_client.chat_postMessage(
-        channel=channel_id,
-        text=mes
-    )
+        await web_client.chat_postMessage(
+            channel=channel_id,
+            text=mes
+        )
+    except Exception as e:
+        Log.error(e)
+        raise(e)
 
 
 def extract_code(text):

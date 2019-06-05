@@ -1,6 +1,7 @@
 import re
 import slack
 
+from log import Log
 import utils
 
 
@@ -15,16 +16,20 @@ async def help_func(**payload):
     channel_id = data.get("channel")
     text = data.get("text")
 
-    if re.match(r"^milbot help hidden", text, re.IGNORECASE):
-        await web_client.chat_postMessage(
-            channel=channel_id,
-            text=mes_hidden()
-        )
-    elif re.match(r"^milbot help", text, re.IGNORECASE):
-        await web_client.chat_postMessage(
-            channel=channel_id,
-            text=mes()
-        )
+    try:
+        if re.match(r"^milbot help hidden", text, re.IGNORECASE):
+            await web_client.chat_postMessage(
+                channel=channel_id,
+                text=mes_hidden()
+            )
+        elif re.match(r"^milbot help", text, re.IGNORECASE):
+            await web_client.chat_postMessage(
+                channel=channel_id,
+                text=mes()
+            )
+    except Exception as e:
+        Log.error(e)
+        raise(e)
 
 
 def mes():
