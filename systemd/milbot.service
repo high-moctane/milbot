@@ -8,7 +8,7 @@ After=docker.service
 ExecStart=/opt/milbot/bin/start_milbot.sh
 ExecStop=/usr/bin/docker stop milbot
 Restart=always
-StartLimitInterval=600
+StartLimitInterval=1200
 StartLimitBurst=5
 
 [Install]
