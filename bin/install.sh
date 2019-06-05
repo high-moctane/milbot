@@ -16,7 +16,8 @@ echo "done"
 
 # Systemd のサービスファイルのインストール
 echo "linking systemd service files"
-ln -s systemd/bluetooth_server.service /etc/systemd/bluetooth_server.service
-ln -s systemd/milbot-redis.service /etc/systemd/milbot-redis.service
-ln -s systemd/bluetooth_server.service /etc/systemd/bluetooth_server.service
+cp systemd/milbot.target /etc/systemd/system/milbot.target
+cp systemd/milbot-bluetooth.service /etc/systemd/system/milbot-bluetooth.service
+cp systemd/milbot-redis.service /etc/systemd/system/milbot-redis.service
+cp systemd/milbot.service /etc/systemd/system/milbot.service
 echo "done"
