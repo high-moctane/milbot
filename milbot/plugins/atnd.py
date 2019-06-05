@@ -21,7 +21,7 @@ async def atnd(**payload):
     text = data.get("text")
 
     redis_cli = redis.Redis(
-        host=os.getenv("HOST_ADDRESS"),
+        host="host_address",
         port=int(os.getenv("REDIS_PORT")),
         db=os.getenv("REDIS_DB"),
         decode_responses=True
@@ -106,7 +106,7 @@ def atnd_default(redis_cli):
     member_addr = redis_cli.hgetall("atnd_members")
     addr_member = {addr: member for member, addr in member_addr.items()}
     addrs_str = "\n".join(list(addr_member)) + "\n"
-    url = "http://" + os.getenv("HOST_ADDRESS") + ":" + os.getenv("ATND_PORT")
+    url = "http://host_address:" + os.getenv("ATND_PORT")
     try:
         resp = requests.post(url, addrs_str)
     except Exception as e:
