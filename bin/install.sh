@@ -20,10 +20,3 @@ ln -s systemd/bluetooth_server.service /etc/systemd/bluetooth_server.service
 ln -s systemd/milbot-redis.service /etc/systemd/milbot-redis.service
 ln -s systemd/bluetooth_server.service /etc/systemd/bluetooth_server.service
 echo "done"
-
-# service の有効化
-echo "enabling systemd services"
-systemctl enable bluetooth_server
-systemctl enable milbot-redis
-systemctl enable milbot
-echo "done"
