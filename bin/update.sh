@@ -36,7 +36,3 @@ cp systemd/milbot-redis.service /etc/systemd/system/milbot-redis.service
 cp systemd/milbot.service /etc/systemd/system/milbot.service
 echo "done"
 echo ""
-
-echo "enabling milbot"
-systemctl enable milbot.target
-echo "done"
