@@ -3,7 +3,6 @@ from html.parser import HTMLParser
 import os
 import re
 import random
-import redis
 import requests
 import slack
 import urllib
@@ -66,36 +65,19 @@ class Parser(HTMLParser):
         self.data.append((tree_name, tree_url))
 
 
-redis_cli = redis.Redis(
-    host=os.getenv("ESS"),
-    port=int(os.getenv("REDIS_PORT")),
-    db=os.getenv("REDIS_DB"),
-    decode_responses=True
-)
+tree_dict = {}
 
-# redis に {name: url} の dict 形式で保存をする
+index_url = "http://www.chiba-museum.jp/jyumoku2014/kensaku/namae.html"
 try:
-    tree_dict = redis_cli.hgetall("kitakunoki")
+    resp = requests.get(index_url)
 except Exception as e:
-    Log.fatal(str(e))
-    raise(e)
+    Log.error(str(e))
 
-
-# redis データがない場合取りに行く
-if len(tree_dict) == 0:
-    index_url = "http://www.chiba-museum.jp/jyumoku2014/kensaku/namae.html"
-    try:
-        resp = requests.get(index_url)
-    except Exception as e:
-        Log.error(str(e))
-
-    resp.encoding = resp.apparent_encoding
-    parser = Parser(index_url)
-    parser.feed(resp.text)
-    parser.close()
-    for name, url in parser.data:
-        redis_cli.hset("kitakunoki", name, url)
-    Log.info("kitakunoki done")
+resp.encoding = resp.apparent_encoding
+parser = Parser(index_url)
+parser.feed(resp.text)
+parser.close()
+tree_dict = parser.data
 
 
 # ======================================================================
@@ -150,17 +132,8 @@ def help_message():
 def todays_kitakunoki():
     """今日の帰宅の木のメッセージを構築します"""
 
-    redis_cli = redis.Redis(
-        host="host_address",
-        port=int(os.getenv("REDIS_PORT")),
-        db=os.getenv("REDIS_DB"),
-        decode_responses=True
-    )
-
-    tree_dict = redis_cli.hgetall("kitakunoki")
-    # ここでソートすることにより日替わり性が保たれる
-    name = new_rand().choice(sorted(list(tree_dict)))
-    url = tree_dict[name]
+    global tree_dict
+    name, url = new_rand().choice(tree_dict)
     return f"今日の帰宅の木は {name} です(｀･ω･´)\n{url}"
 
 
