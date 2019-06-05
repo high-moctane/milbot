@@ -2,7 +2,6 @@
 
 cd /opt/milbot
 
-# サービス停止
 echo "stopping milbot"
 systemctl stop milbot.service
 systemctl stop milbot-redis.service
@@ -16,8 +15,7 @@ systemctl disable milbot.target
 echo "done"
 echo ""
 
-# Systemd のサービスファイルの削除
-echo "removing systemd service files"
+echo "removing unit files"
 rm /etc/systemd/system/milbot.target
 rm /etc/systemd/system/milbot-bluetooth.service
 rm /etc/systemd/system/milbot-redis.service
@@ -25,26 +23,20 @@ rm /etc/systemd/system/milbot.service
 echo "done"
 echo ""
 
-# milbot のコンテナを消す
-echo "removing milbot container"
-docker rm milbot
+echo "pulling milbot"
+git fetch origin master
+git reset --hard origin/master
 echo "done"
 echo ""
 
-# milbot-redis のコンテナを消す
-echo "removing milbot-redis container"
-docker rm milbot-redis
+echo "copying unit files"
+cp systemd/milbot.target /etc/systemd/system/milbot.target
+cp systemd/milbot-bluetooth.service /etc/systemd/system/milbot-bluetooth.service
+cp systemd/milbot-redis.service /etc/systemd/system/milbot-redis.service
+cp systemd/milbot.service /etc/systemd/system/milbot.service
 echo "done"
 echo ""
 
-# milbot のイメージを消す
-echo "removing milbot image"
-docker rmi milbot
+echo "enabling milbot"
+systemctl enable milbot.target
 echo "done"
-echo ""
-
-# milbot-redis のイメージを消す
-echo "removing milbot-redis image"
-docker rmi milbot-redis
-echo "done"
-echo ""
