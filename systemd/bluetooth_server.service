@@ -4,8 +4,7 @@ Documentation=https://github.com/high-moctane/milbot
 After=bluetooth.service
 
 [Service]
-ExecStart=SERVER_NAME=0.0.0.0 PORT=8080 /usr/bin/python3 -B /opt/milbot/bluetooth_server/main.py
-ExecReload=/bin/kill $MAINPID
+ExecStart=/usr/bin/python3 -B /opt/milbot/bluetooth_server/main.py
 ExecStop=/bin/kill $MAINPID
 Restart=always
 
