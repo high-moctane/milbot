@@ -8,6 +8,8 @@ After=docker.service
 ExecStart=/usr/bin/docker start -a milbot-redis
 ExecStop=/usr/bin/docker stop milbot-redis
 Restart=always
+StartLimitInterval=600
+StartLimitBurst=5
 
 [Install]
 WantedBy=milbot.target

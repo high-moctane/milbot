@@ -8,6 +8,8 @@ After=bluetooth.target
 ExecStart=/usr/bin/python3 -B /opt/milbot/bluetooth_server/main.py
 ExecStop=/bin/kill $MAINPID
 Restart=always
+StartLimitInterval=300
+StartLimitBurst=5
 
 [Install]
 WantedBy=milbot.target
