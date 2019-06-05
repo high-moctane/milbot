@@ -5,6 +5,7 @@ import redis
 import requests
 import slack
 
+from log import Log
 import utils
 
 
@@ -66,11 +67,15 @@ def add(text, redis_cli):
     if not is_valid_bd_addr(bd_addr):
         return f"不正な Bluetooth アドレスです(´･ω･｀)\n{bd_addr}"
 
-    members = redis_cli.hkeys("atnd_members")
-    if name in members:
-        return f"{name} は既に登録されています(´･ω･｀)"
+    try:
+        members = redis_cli.hkeys("atnd_members")
+        if name in members:
+            return f"{name} は既に登録されています(´･ω･｀)"
 
-    redis_cli.hset("atnd_members", name, bd_addr)
+        redis_cli.hset("atnd_members", name, bd_addr)
+    except Exception as e:
+        Log.error(e)
+        return f"データベースにアクセスできません(´･ω･｀)\n{e}"
 
     return f"登録しました(｀･ω･´)\n{name}: {bd_addr}"
 
@@ -83,18 +88,27 @@ def delete(text, redis_cli):
         return "不正な入力です(´･ω･｀)\nusage: milbot atnd delete name"
 
     name = elems[3]
-    members = redis_cli.hkeys("atnd_members")
-    if name not in members:
-        return f"{name} はもともと登録されていません(´･ω･｀)"
+    try:
+        members = redis_cli.hkeys("atnd_members")
+        if name not in members:
+            return f"{name} はもともと登録されていません(´･ω･｀)"
 
-    redis_cli.hdel("atnd_members", name)
+        redis_cli.hdel("atnd_members", name)
+    except Exception as e:
+        Log.error(e)
+        return f"データベースにアクセスできません(´･ω･｀)\n{e}"
+
     return f"{name} を削除しました(｀･ω･´)"
 
 
 def show_list(redis_cli):
     """メンバーリストを出す"""
 
-    members = redis_cli.hkeys("atnd_members")
+    try:
+        members = redis_cli.hkeys("atnd_members")
+    except Exception as e:
+        return f"データベースにアクセスできません(´･ω･｀)\n{e}"
+
     if len(members) == 0:
         return "誰も登録されていません(´･ω･｀)"
     return "以下のメンバーが登録されています(｀･ω･´)\n" + "\n".join(members)
@@ -103,7 +117,12 @@ def show_list(redis_cli):
 def atnd_default(redis_cli):
     """メンバーがいるかどうかを検索する"""
 
-    member_addr = redis_cli.hgetall("atnd_members")
+    try:
+        member_addr = redis_cli.hgetall("atnd_members")
+    except Exception as e:
+        Log.error(e)
+        return f"データベースにアクセスできません(´･ω･｀)\n{e}"
+
     addr_member = {addr: member for member, addr in member_addr.items()}
     addrs_str = "\n".join(list(addr_member)) + "\n"
     url = "http://host_address:" + os.getenv("ATND_PORT")
