@@ -1,7 +1,8 @@
 [Unit]
 Description=milbot slack bot
 Documentation=https://github.com/high-moctane/milbot
-Requires=docker.service milbot-bluetooth.service milbot-redis.service
+Requires=docker.service
+After=docker.service
 
 [Service]
 ExecStart=/opt/milbot/bin/start_milbot.sh
