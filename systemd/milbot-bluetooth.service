@@ -10,4 +10,4 @@ ExecStop=/bin/kill $MAINPID
 Restart=always
 
 [Install]
-RequiredBy=milbot.target
+WantedBy=milbot.target
