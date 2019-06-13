@@ -5,10 +5,12 @@ RUN apt-get install -y redis-tools
 RUN apt-get install -y mecab libmecab-dev mecab-ipadic-utf8 swig
 RUN useradd -m admin
 
+# pip はこのタイミングでインストールする
+ENV REQUIREMENTS_URL https://raw.githubusercontent.com/high-moctane/milbot/master/milbot/requirements.txt
+RUN pip install -r $(curl ${REQUIREMENTS_URL})
+
 WORKDIR /home/admin
 COPY . .
-
-RUN pip install -r requirements.txt
 
 USER admin
 CMD ["python3", "main.py"]
