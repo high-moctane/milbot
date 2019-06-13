@@ -7,7 +7,7 @@ RUN useradd -m admin
 
 # pip はこのタイミングでインストールする
 ENV REQUIREMENTS_URL https://raw.githubusercontent.com/high-moctane/milbot/master/milbot/requirements.txt
-RUN pip install -r $(curl ${REQUIREMENTS_URL})
+RUN pip install $(curl ${REQUIREMENTS_URL})
 
 WORKDIR /home/admin
 COPY . .
