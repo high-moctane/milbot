@@ -1,3 +1,5 @@
+import time
+
 import l2ping
 
 
@@ -18,4 +20,11 @@ class Search:
             存在する bd_addr のリスト
         """
 
-        return filter(None, [l2ping.L2ping(bd_addr).run() for bd_addr in self.bd_addr_list])
+        exists = []
+        for bd_addr in self.bd_addr_list:
+            if l2ping.L2ping(bd_addr).run() is not None:
+                exists.append(bd_addr)
+            # 連続して呼び出すともしかして電波拾わないかもしれない
+            time.sleep(0.2)
+
+        return exists
