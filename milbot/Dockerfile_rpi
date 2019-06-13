@@ -4,8 +4,6 @@ RUN apt-get update
 RUN apt-get install -y redis-tools
 RUN apt-get install -y mecab libmecab-dev mecab-ipadic-utf8 swig
 RUN useradd -m admin
-# セキュリティ的にいらないので削除
-RUN apt-get remove openssh-client sudo
 
 # pip はこのタイミングでインストールする
 ENV REQUIREMENTS_URL https://raw.githubusercontent.com/high-moctane/milbot/master/milbot/requirements.txt
