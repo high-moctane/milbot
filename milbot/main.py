@@ -4,14 +4,24 @@ import settings
 import asyncio
 import certifi
 import os
+import signal
 import slack
 import ssl as ssl_lib
 import sys
+import time
+import threading
 
 from log import Log
 
 # Plugins
 import import_plugins
+
+
+def kill():
+    sec = int(os.getenv("RESTART_HOUR")) * 3600
+    time.sleep(sec)
+    os.kill(os.getpid(), signal.SIGKILL)
+
 
 if __name__ == "__main__":
     token = os.getenv("SLACK_API_TOKEN")
@@ -19,8 +29,8 @@ if __name__ == "__main__":
     asyncio.set_event_loop(loop)
 
     # 自動再起動の設定
-    sec = int(os.getenv("RESTART_HOUR")) * 3600
-    loop.call_later(sec, sys.exit, 1)
+    thread = threading.Thread(target=kill)
+    thread.start()
 
     try:
         ssl_context = ssl_lib.create_default_context(cafile=certifi.where())
