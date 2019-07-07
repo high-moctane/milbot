@@ -10,6 +10,7 @@ import (
 	"github.com/high-moctane/milbot/milbot/plugin"
 	"github.com/high-moctane/milbot/milbot/plugins/exit"
 	"github.com/high-moctane/milbot/milbot/plugins/ping"
+	"github.com/high-moctane/milbot/milbot/plugins/restart"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/nlopes/slack"
 )
@@ -21,6 +22,7 @@ var logger = log.New(os.Stdout, "milbot: ", log.Ldate|log.Ltime|log.Lmicrosecond
 var plugins = []plugin.Plugin{
 	ping.New(),
 	exit.New(),
+	restart.New(),
 }
 
 func main() {
