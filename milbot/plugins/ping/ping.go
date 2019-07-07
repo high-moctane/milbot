@@ -23,7 +23,7 @@ func New() Plugin {
 }
 
 // Serve では "milbot ping" に反応して "pong(｀･ω･´)" と返します
-func (p Plugin) Serve(api *slack.Client, ch chan slack.RTMEvent) {
+func (p Plugin) Serve(api *slack.Client, ch <-chan slack.RTMEvent) {
 	for msg := range ch {
 		switch ev := msg.Data.(type) {
 		case *slack.MessageEvent:
