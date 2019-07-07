@@ -32,8 +32,10 @@ func main() {
 }
 
 func run() error {
+	// シグナルハンドリング
 	go handleSignal()
 
+	// Slack に接続
 	api, err := newAPI()
 	if err != nil {
 		return err
@@ -43,20 +45,26 @@ func run() error {
 	go rtm.ManageConnection()
 	defer rtm.Disconnect()
 
-	// この chan を使うことで Plugin が死んだかどうか
-	// つまり rtm.IncomingEvents が閉じたかどうかを確認する
-	ch := make(chan struct{}, len(plugins))
-	for _, p := range plugins {
-		ch <- struct{}{}
-		go func(p plugin.Plugin) {
-			appendPlugin(p, api, rtm.IncomingEvents)
-			<-ch
-		}(p) // このへんなのは golang の仕様
+	// 各プラグインに与えるイベント chan
+	eventChs := makeEventChs()
+
+	// プラグインを起動していく
+	for i := 0; i < len(plugins); i++ {
+		go appendPlugin(plugins[i], api, eventChs[i])
 	}
 
-	// ここがブロックされないということはどれかの Plugin が死んだ。
-	// どれかのプラグインが死んだら即 bot 終了という仕様にする
-	ch <- struct{}{}
+	// ここでイベントを受け取り各プラグインに一斉送信する
+	for ev := range rtm.IncomingEvents {
+		for i := 0; i < len(plugins); i++ {
+			// こういう実装は goroutine leak を招くが，
+			// 実際そんなにやばいリクエストは来ない
+			go func(i int) {
+				eventChs[i] <- ev
+			}(i)
+		}
+	}
+
+	// ここにたどり着いたということは rtm.IncomingEvents がもう受け取れないということ
 	return fmt.Errorf("main loop ended")
 }
 
@@ -64,6 +72,16 @@ func run() error {
 func appendPlugin(p plugin.Plugin, api *slack.Client, eventCh chan slack.RTMEvent) {
 	p.Serve(api, eventCh)
 	defer p.Stop()
+}
+
+// makeEventChs は各プラグインに与える chan の列を生成する
+func makeEventChs() []chan slack.RTMEvent {
+	chs := make([]chan slack.RTMEvent, len(plugins))
+	for i := 0; i < len(plugins); i++ {
+		// バッファが 10 もあれば十分でしょ！ 10 だけに(｀･ω･´)
+		chs[i] = make(chan slack.RTMEvent, 10)
+	}
+	return chs
 }
 
 // getSlackToken で SLACK_API_TOKEN を取得する
