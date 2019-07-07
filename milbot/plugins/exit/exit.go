@@ -23,7 +23,7 @@ func New() Plugin {
 }
 
 // Serve では "milbot exit" に反応して終了コード 0 で終了する
-func (p Plugin) Serve(api *slack.Client, ch chan slack.RTMEvent) {
+func (p Plugin) Serve(api *slack.Client, ch <-chan slack.RTMEvent) {
 	for msg := range ch {
 		switch ev := msg.Data.(type) {
 		case *slack.MessageEvent:
