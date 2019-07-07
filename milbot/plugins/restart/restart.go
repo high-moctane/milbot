@@ -5,6 +5,8 @@ import (
 	"os"
 	"regexp"
 
+	"github.com/high-moctane/milbot/milbot/postlog"
+
 	"github.com/nlopes/slack"
 )
 
@@ -52,6 +54,7 @@ func restart(api *slack.Client, ev *slack.MessageEvent) {
 		username = ""
 	}
 
+	postlog.Log("restart: restarted by ", username)
 	logger.Printf("restarted by %s", username)
 	os.Exit(1)
 }
