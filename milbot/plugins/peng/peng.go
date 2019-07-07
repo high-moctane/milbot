@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/high-moctane/milbot/milbot/postlog"
+
 	"github.com/nlopes/slack"
 )
 
@@ -60,6 +62,7 @@ func help(api *slack.Client, ev *slack.MessageEvent) {
 
 	jackProb, err := jackpotProbability()
 	if err != nil {
+		postlog.Log("peng: peng help error: ", err)
 		logger.Print("peng help error: ", err)
 		return
 	}
@@ -73,6 +76,7 @@ func help(api *slack.Client, ev *slack.MessageEvent) {
 		slack.MsgOptionText(mes, false),
 	)
 	if err != nil {
+		postlog.Log("peng: ", err)
 		logger.Print(err)
 		return
 	}
@@ -85,6 +89,7 @@ func peng(api *slack.Client, ev *slack.MessageEvent) {
 
 	jackProb, err := jackpotProbability()
 	if err != nil {
+		postlog.Log("peng: ", err)
 		logger.Print("peng error: ", err)
 		return
 	}
@@ -96,6 +101,7 @@ func peng(api *slack.Client, ev *slack.MessageEvent) {
 		slack.MsgOptionText(mes, false),
 	)
 	if err != nil {
+		postlog.Log("peng: ", err)
 		logger.Print(err)
 		return
 	}

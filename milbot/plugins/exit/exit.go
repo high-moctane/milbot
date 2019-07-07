@@ -5,6 +5,7 @@ import (
 	"os"
 	"regexp"
 
+	"github.com/high-moctane/milbot/milbot/postlog"
 	"github.com/nlopes/slack"
 )
 
@@ -52,6 +53,7 @@ func exit(api *slack.Client, ev *slack.MessageEvent) {
 		username = ""
 	}
 
+	postlog.Log("exit: exited by ", username)
 	logger.Printf("exited by %s", username)
 	os.Exit(0)
 }
