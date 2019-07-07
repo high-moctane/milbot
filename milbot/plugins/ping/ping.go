@@ -33,7 +33,8 @@ func (p Plugin) Serve(api *slack.Client, ch chan slack.RTMEvent) {
 			}
 
 			if validPrefix.MatchString(ev.Text) {
-				go sendPong(api, ev.Channel)
+				receiveLog(api, ev)
+				sendPong(api, ev.Channel)
 			}
 		}
 	}
@@ -55,4 +56,14 @@ func sendPong(api *slack.Client, channel string) {
 	}
 	// この text が "" なのどうにも納得がいかない
 	logger.Printf("send pong: {chan: %s, ts: %s, text: %s}", ch, ts, text)
+}
+
+// receiveLog でメッセージを受けっとたよーというログを吐く
+func receiveLog(api *slack.Client, ev *slack.MessageEvent) {
+	user, err := api.GetUserInfo(ev.User)
+	username := user.Name
+	if err != nil {
+		username = ""
+	}
+	logger.Print("received ping by ", username)
 }
