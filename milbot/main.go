@@ -9,6 +9,7 @@ import (
 
 	"github.com/high-moctane/milbot/milbot/plugin"
 	"github.com/high-moctane/milbot/milbot/plugins/exit"
+	"github.com/high-moctane/milbot/milbot/plugins/hello"
 	"github.com/high-moctane/milbot/milbot/plugins/peng"
 	"github.com/high-moctane/milbot/milbot/plugins/ping"
 	"github.com/high-moctane/milbot/milbot/plugins/restart"
@@ -22,6 +23,7 @@ var logger = log.New(os.Stdout, "milbot: ", log.Ldate|log.Ltime|log.Lmicrosecond
 // ここにプラグインを列挙していくぞ！
 var plugins = []plugin.Plugin{
 	exit.New(),
+	hello.New(),
 	peng.New(),
 	ping.New(),
 	restart.New(),
