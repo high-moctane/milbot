@@ -55,6 +55,33 @@
   revision = "ba968bfe8b2f7e042a574c888954fccecfa385b4"
   version = "v0.8.1"
 
+[[projects]]
+  branch = "master"
+  digest = "1:d7b978a787736537d0ad2f84c0e8b75b05c2febef0537198e28edf1cf2768afd"
+  name = "golang.org/x/net"
+  packages = [
+    "html",
+    "html/atom",
+  ]
+  pruneopts = "UT"
+  revision = "da137c7871d730100384dbcf36e6f8fa493aef5b"
+
+[[projects]]
+  digest = "1:c7da72aff55db0b6f70757b3b7a9b867931192033eaab200fc5ae222ffda251c"
+  name = "golang.org/x/text"
+  packages = [
+    "encoding",
+    "encoding/internal",
+    "encoding/internal/identifier",
+    "encoding/japanese",
+    "internal/gen",
+    "transform",
+    "unicode/cldr",
+  ]
+  pruneopts = "UT"
+  revision = "342b2e1fbaa52c93f31447ad2c6abc048c63e475"
+  version = "v0.3.2"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
@@ -62,6 +89,8 @@
     "github.com/go-redis/redis",
     "github.com/joho/godotenv/autoload",
     "github.com/nlopes/slack",
+    "golang.org/x/net/html",
+    "golang.org/x/text/encoding/japanese",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
