@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/high-moctane/milbot/milbot/plugin"
+	"github.com/high-moctane/milbot/milbot/plugins/atnd"
 	"github.com/high-moctane/milbot/milbot/plugins/exit"
 	"github.com/high-moctane/milbot/milbot/plugins/hello"
 	"github.com/high-moctane/milbot/milbot/plugins/peng"
@@ -22,6 +23,7 @@ var logger = log.New(os.Stdout, "milbot: ", log.Ldate|log.Ltime|log.Lmicrosecond
 
 // ここにプラグインを列挙していくぞ！
 var plugins = []plugin.Plugin{
+	atnd.New(),
 	exit.New(),
 	hello.New(),
 	peng.New(),
