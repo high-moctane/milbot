@@ -1,17 +1,12 @@
 package restart
 
 import (
-	"log"
 	"os"
 	"regexp"
 
-	"github.com/high-moctane/milbot/milbot/postlog"
-
+	"github.com/high-moctane/milbot/milbot/botutils"
 	"github.com/nlopes/slack"
 )
-
-// logger はちょっとリッチにしといた
-var logger = log.New(os.Stdout, "milbot-restart: ", log.Ldate|log.Ltime|log.Lmicroseconds|log.Lshortfile)
 
 // validPrefix は有効な先頭文字列
 var validPrefix = regexp.MustCompile(`(?i)^milbot restart`)
@@ -54,7 +49,6 @@ func restart(api *slack.Client, ev *slack.MessageEvent) {
 		username = ""
 	}
 
-	postlog.Log("restart: restarted by ", username)
-	logger.Printf("restarted by %s", username)
+	botutils.LogBoth("restart: restarted by ", username)
 	os.Exit(1)
 }

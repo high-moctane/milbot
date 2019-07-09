@@ -15,6 +15,7 @@ import (
 	"github.com/high-moctane/milbot/milbot/plugins/peng"
 	"github.com/high-moctane/milbot/milbot/plugins/ping"
 	"github.com/high-moctane/milbot/milbot/plugins/restart"
+	"github.com/high-moctane/milbot/milbot/plugins/script"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/nlopes/slack"
 )
@@ -31,6 +32,7 @@ var plugins = []plugin.Plugin{
 	peng.New(),
 	ping.New(),
 	restart.New(),
+	script.New(),
 }
 
 func main() {

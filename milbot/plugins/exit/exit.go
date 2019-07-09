@@ -1,16 +1,12 @@
 package exit
 
 import (
-	"log"
 	"os"
 	"regexp"
 
-	"github.com/high-moctane/milbot/milbot/postlog"
+	"github.com/high-moctane/milbot/milbot/botutils"
 	"github.com/nlopes/slack"
 )
-
-// logger はちょっとリッチにしといた
-var logger = log.New(os.Stdout, "milbot-exit: ", log.Ldate|log.Ltime|log.Lmicroseconds|log.Lshortfile)
 
 // validPrefix は有効な先頭文字列
 var validPrefix = regexp.MustCompile(`(?i)^milbot exit`)
@@ -53,7 +49,6 @@ func exit(api *slack.Client, ev *slack.MessageEvent) {
 		username = ""
 	}
 
-	postlog.Log("exit: exited by ", username)
-	logger.Printf("exited by %s", username)
+	botutils.Log("exit: exited by ", username)
 	os.Exit(0)
 }
