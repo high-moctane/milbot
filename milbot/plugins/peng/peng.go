@@ -2,7 +2,6 @@ package peng
 
 import (
 	"fmt"
-	"log"
 	"math"
 	"math/rand"
 	"os"
@@ -10,13 +9,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/high-moctane/milbot/milbot/postlog"
+	"github.com/high-moctane/milbot/milbot/botutils"
 
 	"github.com/nlopes/slack"
 )
-
-// logger はちょっとリッチにしといた
-var logger = log.New(os.Stdout, "milbot-peng: ", log.Ldate|log.Ltime|log.Lmicroseconds|log.Lshortfile)
 
 // peng を発動する先頭文字列
 var pengPrefix = regexp.MustCompile(`(?i)^milbot peng`)
@@ -58,12 +54,11 @@ func (p Plugin) Stop() error {
 }
 
 func help(api *slack.Client, ev *slack.MessageEvent) {
-	receiveLog(api, ev, "peng help")
+	botutils.LogEventReceive(api, ev, "peng help")
 
 	jackProb, err := jackpotProbability()
 	if err != nil {
-		postlog.Log("peng: peng help error: ", err)
-		logger.Print("peng help error: ", err)
+		botutils.LogBoth("peng: peng help error: ", err)
 		return
 	}
 
@@ -71,56 +66,22 @@ func help(api *slack.Client, ev *slack.MessageEvent) {
 	mes += strconv.FormatFloat(jackProb, 'f', 4, 64) + "\n"
 	mes += "です(｀･ω･´):fire::penguin::fire:"
 
-	channel, ts, text, err := api.SendMessage(
-		ev.Channel,
-		slack.MsgOptionText(mes, false),
-	)
-	if err != nil {
-		postlog.Log("peng: ", err)
-		logger.Print(err)
-		return
-	}
-	sendLog(channel, ts, text)
+	botutils.SendMessageWithLog(api, ev, mes)
 }
 
 // peng はペンギン燃やしを送信する
 func peng(api *slack.Client, ev *slack.MessageEvent) {
-	receiveLog(api, ev, "peng")
+	botutils.LogEventReceive(api, ev, "peng")
 
 	jackProb, err := jackpotProbability()
 	if err != nil {
-		postlog.Log("peng: ", err)
-		logger.Print("peng error: ", err)
+		botutils.LogBoth("peng: peng error: ", err)
 		return
 	}
 
 	mes := firePenguin(jackProb)
 
-	channel, ts, text, err := api.SendMessage(
-		ev.Channel,
-		slack.MsgOptionText(mes, false),
-	)
-	if err != nil {
-		postlog.Log("peng: ", err)
-		logger.Print(err)
-		return
-	}
-	sendLog(channel, ts, text)
-}
-
-// receiveLog でメッセージを受けっとたよーというログを吐く
-func receiveLog(api *slack.Client, ev *slack.MessageEvent, mes string) {
-	user, err := api.GetUserInfo(ev.User)
-	username := user.Name
-	if err != nil {
-		username = ""
-	}
-	logger.Print("received "+mes+" by ", username)
-}
-
-// sendLog でメッセージを送ったよーというログを吐く
-func sendLog(channel, ts, text string) {
-	logger.Printf("sent message: {channel: %s, ts: %s, text: %s}", channel, ts, text)
+	botutils.SendMessageWithLog(api, ev, mes)
 }
 
 // jackpotProbability は当たりの確率を返す

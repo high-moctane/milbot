@@ -3,20 +3,17 @@ package atnd
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
 
+	"github.com/high-moctane/milbot/milbot/botutils"
+
 	"github.com/go-redis/redis"
-	"github.com/high-moctane/milbot/milbot/postlog"
 	"github.com/nlopes/slack"
 )
-
-// logger はちょっとリッチにしといた
-var logger = log.New(os.Stdout, "milbot-atnd: ", log.Ldate|log.Ltime|log.Lmicroseconds|log.Lshortfile)
 
 // atnd を発動する先頭文字列
 var atndPrefix = regexp.MustCompile(`(?i)^milbot atnd`)
@@ -74,37 +71,9 @@ func (p Plugin) Stop() error {
 	return nil
 }
 
-// receiveLog でメッセージを受けっとたよーというログを吐く
-func receiveLog(api *slack.Client, ev *slack.MessageEvent, mes string) {
-	user, err := api.GetUserInfo(ev.User)
-	username := user.Name
-	if err != nil {
-		username = ""
-	}
-	logger.Print("received "+mes+" by ", username)
-}
-
-// sendLog でメッセージを送ったよーというログを吐く
-func sendLog(channel, ts, text string) {
-	logger.Printf("sent message: {channel: %s, ts: %s, text: %s}", channel, ts, text)
-}
-
-func postMessage(api *slack.Client, ev *slack.MessageEvent, mes string) {
-	channel, ts, text, err := api.SendMessage(
-		ev.Channel,
-		slack.MsgOptionText(mes, true),
-	)
-	if err != nil {
-		postlog.Log("atnd: ", err)
-		logger.Print(err)
-		return
-	}
-	sendLog(channel, ts, text)
-}
-
 // help のメッセージを送信する
 func help(api *slack.Client, ev *slack.MessageEvent) {
-	receiveLog(api, ev, "atnd help")
+	botutils.LogEventReceive(api, ev, "atnd help")
 
 	mes :=
 		"以下の機能があります(｀･ω･´)\n" +
@@ -127,68 +96,65 @@ func help(api *slack.Client, ev *slack.MessageEvent) {
 			"	`name` に削除するメンバーの名前を正しく書いてください。\n" +
 			"	`milbot atnd list` で正確な名前を確認してください。"
 
-	postMessage(api, ev, mes)
+	botutils.SendMessageWithLog(api, ev, mes)
 }
 
 // add でメンバーを追加する
 func add(api *slack.Client, ev *slack.MessageEvent) {
-	receiveLog(api, ev, "atnd add")
+	botutils.LogEventReceive(api, ev, "atnd add")
 
 	elems := strings.Split(ev.Text, " ")
 	if len(elems) != 5 {
-		postMessage(api, ev, "不正な入力です(´･ω･｀)\nusage: milbot atnd add name address")
+		botutils.SendMessageWithLog(api, ev, "不正な入力です(´･ω･｀)\nusage: milbot atnd add name address")
 		return
 	}
 	name := elems[3]
 	bdAddr := elems[4]
 	if !isValidBdAddr(bdAddr) {
 		mes := fmt.Sprint("不正な Bluetooth アドレスです(´･ω･｀): ", bdAddr)
-		postMessage(api, ev, mes)
+		botutils.SendMessageWithLog(api, ev, mes)
 		return
 	}
 
 	members, err := redisCli.HKeys(KeyMembers).Result()
 	if err != nil {
-		postMessage(api, ev, "データベースにアクセスできません(´; ω ;｀)")
-		postlog.Log("atnd add: ", err)
-		logger.Print("atnd add: ", err)
+		botutils.SendMessageWithLog(api, ev, "データベースにアクセスできません(´; ω ;｀)")
+		botutils.LogBoth("atnd add: redis error: ", err)
 		return
 	}
 
 	for _, member := range members {
 		if name == member {
-			postMessage(api, ev, name+" はすでに登録されています(´･ω･｀)")
+			botutils.SendMessageWithLog(api, ev, name+" はすでに登録されています(´･ω･｀)")
 			return
 		}
 	}
 
 	if err := redisCli.HSet(KeyMembers, name, bdAddr).Err(); err != nil {
-		postMessage(api, ev, "データベースに登録できませんでした(´; ω ;｀)")
-		postlog.Log("atnd add: ", err)
-		logger.Print("atnd add: ", err)
+		botutils.SendMessageWithLog(api, ev, "データベースに登録できませんでした(´; ω ;｀)")
+		botutils.LogBoth("atnd add: redis error: ", err)
 		return
 	}
 
 	mes := fmt.Sprintf("登録しました(｀･ω･´)\n%s: %s", name, bdAddr)
-	postMessage(api, ev, mes)
+	botutils.SendMessageWithLog(api, ev, mes)
 }
 
 // remove でメンバーを削除する
 func remove(api *slack.Client, ev *slack.MessageEvent) {
-	receiveLog(api, ev, "atnd remove")
+	botutils.LogEventReceive(api, ev, "atnd remove")
 
 	elems := strings.Split(ev.Text, " ")
 	if len(elems) != 4 {
-		postMessage(api, ev, "不正な入力です(´･ω･｀)\nusage: milbot atnd remove name")
+		botutils.SendMessageWithLog(api, ev, "不正な入力です(´･ω･｀)\nusage: milbot atnd remove name")
 		return
 	}
 	name := elems[3]
 
 	members, err := redisCli.HKeys(KeyMembers).Result()
 	if err != nil {
-		postMessage(api, ev, "データベースにアクセスできません(´; ω ;｀)")
-		postlog.Log("atnd remove: ", err)
-		logger.Print("atnd remove: ", err)
+		botutils.SendMessageWithLog(api, ev, "データベースにアクセスできません(´; ω ;｀)")
+		botutils.LogBoth("atnd remove: redis error: ", err)
 		return
 	}
 	exists := false
@@ -198,53 +164,50 @@ func remove(api *slack.Client, ev *slack.MessageEvent) {
 		}
 	}
 	if !exists {
-		postMessage(api, ev, name+" はもともと登録されていません(´･ω･｀)")
+		botutils.SendMessageWithLog(api, ev, name+" はもともと登録されていません(´･ω･｀)")
 		return
 	}
 
 	if err := redisCli.HDel(KeyMembers, name).Err(); err != nil {
-		postMessage(api, ev, "データベースから削除できませんでした(´; ω ;｀)")
-		postlog.Log("atnd remove: ", err)
-		logger.Print("atnd remove: ", err)
+		botutils.SendMessageWithLog(api, ev, "データベースから削除できませんでした(´; ω ;｀)")
+		botutils.LogBoth("atnd remove: redis error: ", err)
 		return
 	}
 
-	postMessage(api, ev, "削除しました(｀･ω･´)\n"+name)
+	botutils.SendMessageWithLog(api, ev, "削除しました(｀･ω･´)\n"+name)
 }
 
 // list でメンバーをリストアップする
 func list(api *slack.Client, ev *slack.MessageEvent) {
-	receiveLog(api, ev, "atnd list")
+	botutils.LogEventReceive(api, ev, "atnd list")
 
 	members, err := redisCli.HKeys(KeyMembers).Result()
 	if err != nil {
-		postMessage(api, ev, "データベースにアクセスできません(´; ω ;｀)")
-		postlog.Log("atnd list: ", err)
-		logger.Print("atnd list: ", err)
+		botutils.SendMessageWithLog(api, ev, "データベースにアクセスできません(´; ω ;｀)")
+		botutils.LogBoth("atnd list: redis error: ", err)
 		return
 	}
 
 	if len(members) == 0 {
-		postMessage(api, ev, "誰も登録されていません(´･ω･｀)")
+		botutils.SendMessageWithLog(api, ev, "誰も登録されていません(´･ω･｀)")
 		return
 	}
 
 	mes := "以下のメンバーが登録されています(｀･ω･´)\n"
 	mes += strings.Join(members, "\n")
-	postMessage(api, ev, mes)
+	botutils.SendMessageWithLog(api, ev, mes)
 }
 
 // atnd でメンバーをサーチする
 func atnd(api *slack.Client, ev *slack.MessageEvent) {
-	receiveLog(api, ev, "atnd atnd")
+	botutils.LogEventReceive(api, ev, "atnd atnd")
 
-	go postMessage(api, ev, "在室確認をします。しばらくお待ちください(｀･ω･´)")
+	go botutils.SendMessageWithLog(api, ev, "在室確認をします。しばらくお待ちください(｀･ω･´)")
 
 	memberAddr, err := redisCli.HGetAll(KeyMembers).Result()
 	if err != nil {
-		go postMessage(api, ev, "データベースにアクセスできません(´; ω ;｀)")
-		go postlog.Log("atnd: ", err)
-		logger.Print("atnd: ", err)
+		go botutils.SendMessageWithLog(api, ev, "データベースにアクセスできません(´; ω ;｀)")
+		go botutils.LogBoth("atnd: redis error: ", err)
 		return
 	}
 
@@ -252,14 +215,13 @@ func atnd(api *slack.Client, ev *slack.MessageEvent) {
 
 	exists, err := postAtnd(memberAddr)
 	if err != nil {
-		go postMessage(api, ev, "サーバとの接続に失敗しました(´; ω ;｀)")
-		go postlog.Log("atnd: ", err)
-		logger.Print("atnd: ", err)
+		go botutils.SendMessageWithLog(api, ev, "サーバとの接続に失敗しました(´; ω ;｀)")
+		go botutils.LogBoth("atnd: could not access bluetooth server", err)
 		return
 	}
 
 	if len(exists) == 0 {
-		go postMessage(api, ev, "現在部屋には誰もいません(´･ω･｀)")
+		go botutils.SendMessageWithLog(api, ev, "現在部屋には誰もいません(´･ω･｀)")
 		return
 	}
 
@@ -268,7 +230,7 @@ func atnd(api *slack.Client, ev *slack.MessageEvent) {
 		mes += addrMember[addr]
 	}
 	mes += "が在室しています(｀･ω･´)"
-	go postMessage(api, ev, mes)
+	go botutils.SendMessageWithLog(api, ev, mes)
 }
 
 // postAtnd はラズパイのサーバに post して今いるメンバーのアドレスのリストを返す

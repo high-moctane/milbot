@@ -1,15 +1,9 @@
 package hello
 
 import (
-	"log"
-	"os"
-
-	"github.com/high-moctane/milbot/milbot/postlog"
+	"github.com/high-moctane/milbot/milbot/botutils"
 	"github.com/nlopes/slack"
 )
-
-// logger はちょっとリッチにしといた
-var logger = log.New(os.Stdout, "milbot-hello: ", log.Ldate|log.Ltime|log.Lmicroseconds|log.Lshortfile)
 
 // Plugin の中身は必要ない
 type Plugin struct{}
@@ -36,6 +30,5 @@ func (p Plugin) Stop() error {
 
 // hello は接続したよのログを出す
 func hello() {
-	postlog.Log("hello: received hello")
-	logger.Print("received hello")
+	botutils.LogBoth("hello: received hello")
 }
