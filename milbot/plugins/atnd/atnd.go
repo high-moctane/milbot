@@ -233,6 +233,23 @@ func atnd(api *slack.Client, ev *slack.MessageEvent) {
 	go botutils.SendMessageWithLog(api, ev, mes)
 }
 
+// Exist は部屋に誰かいたら true を返す
+func Exist() bool {
+	memberAddr, err := redisCli.HGetAll(KeyMembers).Result()
+	if err != nil {
+		go botutils.LogBoth("atnd: redis error: ", err)
+		return false
+	}
+
+	exists, err := postAtnd(memberAddr)
+	if err != nil {
+		go botutils.LogBoth("atnd: could not access bluetooth server", err)
+		return false
+	}
+
+	return len(exists) > 0
+}
+
 // postAtnd はラズパイのサーバに post して今いるメンバーのアドレスのリストを返す
 func postAtnd(memberAddr map[string]string) ([]string, error) {
 	url := "http://host_address:" + os.Getenv("ATND_PORT")
