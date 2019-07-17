@@ -2,6 +2,7 @@ package botutils
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/nlopes/slack"
 )
@@ -18,7 +19,7 @@ func GetUsername(api *slack.Client, event *slack.MessageEvent) (string, error) {
 
 // SendMessageWithLog はログ付きでメッセージを送ります
 func SendMessageWithLog(api *slack.Client, event *slack.MessageEvent, message string) {
-	channel, ts, text, err := api.SendMessage(
+	channel, ts, _, err := api.SendMessage(
 		event.Channel,
 		slack.MsgOptionText(message, true),
 	)
@@ -26,5 +27,5 @@ func SendMessageWithLog(api *slack.Client, event *slack.MessageEvent, message st
 		LogBoth("post error: ", err)
 		return
 	}
-	LogSendMessage(channel, ts, text)
+	LogSendMessage(channel, ts, strings.ReplaceAll(message, "\n", `\n`))
 }
