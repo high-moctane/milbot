@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/high-moctane/milbot/milbot/botutils"
 
 	"github.com/high-moctane/milbot/milbot/plugin"
 	"github.com/high-moctane/milbot/milbot/plugins/atnd"
@@ -21,9 +22,6 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/nlopes/slack"
 )
-
-// logger はちょっとリッチにしといた
-var logger = log.New(os.Stdout, "milbot: ", log.Ldate|log.Ltime|log.Lmicroseconds|log.Lshortfile)
 
 // ここにプラグインを列挙していくぞ！
 var plugins = []plugin.Plugin{
@@ -41,7 +39,7 @@ var plugins = []plugin.Plugin{
 
 func main() {
 	if err := run(); err != nil {
-		logger.Fatal(err)
+		botutils.LogBoth("main error: ", err)
 	}
 }
 
@@ -117,7 +115,6 @@ func newAPI() (*slack.Client, error) {
 	return slack.New(
 		token,
 		slack.OptionDebug(false), // これを true にすると通信の詳細が表示される
-		slack.OptionLog(logger),
 	), nil
 }
 
@@ -128,14 +125,14 @@ func handleSignal() {
 	s := <-ch
 	switch s {
 	case syscall.SIGTERM:
-		logger.Print("caught SIGTERM")
+		botutils.LogBoth("caught SIGTERM")
 		os.Exit(1)
 
 	case syscall.SIGINT:
-		logger.Print("caught SIGINT")
+		botutils.LogBoth("caught SIGINT")
 		os.Exit(1)
 
 	default:
-		logger.Printf("caught unknown signal: %s", s)
+		botutils.LogBoth("caught unknown signal: ", s)
 	}
 }
