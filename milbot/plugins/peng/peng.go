@@ -66,7 +66,7 @@ func help(api *slack.Client, ev *slack.MessageEvent) {
 	mes += strconv.FormatFloat(jackProb, 'f', 4, 64) + "\n"
 	mes += "です(｀･ω･´):fire::penguin::fire:"
 
-	botutils.SendMessageWithLog(api, ev, mes)
+	botutils.SendMessageWithLog(api, ev.Channel, mes)
 }
 
 // peng はペンギン燃やしを送信する
@@ -81,7 +81,7 @@ func peng(api *slack.Client, ev *slack.MessageEvent) {
 
 	mes := firePenguin(jackProb)
 
-	botutils.SendMessageWithLog(api, ev, mes)
+	botutils.SendMessageWithLog(api, ev.Channel, mes)
 }
 
 // jackpotProbability は当たりの確率を返す

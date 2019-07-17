@@ -54,7 +54,7 @@ func help(api *slack.Client, ev *slack.MessageEvent) {
 
 	mes := "575，57577，7775 に反応します(｀･ω･´)"
 
-	botutils.SendMessageWithLog(api, ev, mes)
+	botutils.SendMessageWithLog(api, ev.Channel, mes)
 }
 
 // run は text から 575 などを探し出して指摘します
@@ -77,7 +77,7 @@ func run(api *slack.Client, ev *slack.MessageEvent) {
 		return
 	}
 
-	botutils.SendMessageWithLog(api, ev, strings.Join(mes, "\n\n"))
+	botutils.SendMessageWithLog(api, ev.Channel, strings.Join(mes, "\n\n"))
 }
 
 // findSenryu は text から 575 を探して返します

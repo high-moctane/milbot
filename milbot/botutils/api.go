@@ -18,9 +18,9 @@ func GetUsername(api *slack.Client, event *slack.MessageEvent) (string, error) {
 }
 
 // SendMessageWithLog はログ付きでメッセージを送ります
-func SendMessageWithLog(api *slack.Client, event *slack.MessageEvent, message string) {
+func SendMessageWithLog(api *slack.Client, channel string, message string) {
 	channel, ts, _, err := api.SendMessage(
-		event.Channel,
+		channel,
 		slack.MsgOptionText(message, true),
 	)
 	if err != nil {

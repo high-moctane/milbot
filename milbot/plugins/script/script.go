@@ -65,39 +65,39 @@ func help(api *slack.Client, ev *slack.MessageEvent) {
 		"コマンドに続けてスクリプトを入力してください。" +
 		"コードを ``` で囲んでも動きます。"
 
-	botutils.SendMessageWithLog(api, ev, mes)
+	botutils.SendMessageWithLog(api, ev.Channel, mes)
 }
 
 // bash を走らせる
 func bash(api *slack.Client, ev *slack.MessageEvent) {
 	input, err := parseInput(ev.Text)
 	if err != nil {
-		botutils.SendMessageWithLog(api, ev, "入力フォーマットが不正です(´･ω･｀)")
+		botutils.SendMessageWithLog(api, ev.Channel, "入力フォーマットが不正です(´･ω･｀)")
 		return
 	}
 	out, err := run([]string{"bash"}, "main.sh", input)
 	if err != nil {
-		botutils.SendMessageWithLog(api, ev, "実行に失敗しました(´; ω ;｀)\n"+out)
+		botutils.SendMessageWithLog(api, ev.Channel, "実行に失敗しました(´; ω ;｀)\n"+out)
 		botutils.LogBoth("script: bash error: ", err)
 		return
 	}
-	botutils.SendMessageWithLog(api, ev, out)
+	botutils.SendMessageWithLog(api, ev.Channel, out)
 }
 
 // python3 を走らせる
 func python3(api *slack.Client, ev *slack.MessageEvent) {
 	input, err := parseInput(ev.Text)
 	if err != nil {
-		botutils.SendMessageWithLog(api, ev, "入力フォーマットが不正です(´･ω･｀)")
+		botutils.SendMessageWithLog(api, ev.Channel, "入力フォーマットが不正です(´･ω･｀)")
 		return
 	}
 	out, err := run([]string{"python3", "-B"}, "main.py", input)
 	if err != nil {
-		botutils.SendMessageWithLog(api, ev, "実行に失敗しました(´; ω ;｀)\n"+out)
+		botutils.SendMessageWithLog(api, ev.Channel, "実行に失敗しました(´; ω ;｀)\n"+out)
 		botutils.LogBoth("script: python3 error: ", err)
 		return
 	}
-	botutils.SendMessageWithLog(api, ev, out)
+	botutils.SendMessageWithLog(api, ev.Channel, out)
 }
 
 // parseInput は送られたメッセージからスクリプトの部分を取り出す
