@@ -17,12 +17,19 @@ var helpMessage = "以下のコマンドを受け付けています。\n" +
 	"    `milbot atnd help`\n" +
 	"    `milbot atnd list`\n" +
 	"    `milbot exit`\n" +
+	"    `milbot exit help`\n" +
 	"    `milbot help`\n" +
+	"    `milbot kitakunoki help`\n" +
 	"    `milbot peng`\n" +
+	"    `milbot peng help`\n" +
 	"    `milbot ping`\n" +
+	"    `milbot ping help`\n" +
 	"    `milbot restart`\n" +
+	"    `milbot restart help`\n" +
+	"    `milbot script help`\n" +
 	"    `milbot bash`\n" +
 	"    `milbot python3`\n" +
+	"    `milbot verse help`\n" +
 	"\n" +
 	"また以下の機能があります。\n" +
 	"    帰宅の木\n" +
