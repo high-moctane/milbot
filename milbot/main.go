@@ -16,6 +16,7 @@ import (
 	"github.com/high-moctane/milbot/milbot/plugins/ping"
 	"github.com/high-moctane/milbot/milbot/plugins/restart"
 	"github.com/high-moctane/milbot/milbot/plugins/script"
+	"github.com/high-moctane/milbot/milbot/plugins/verse"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/nlopes/slack"
 )
@@ -33,6 +34,7 @@ var plugins = []plugin.Plugin{
 	ping.New(),
 	restart.New(),
 	script.New(),
+	verse.New(),
 }
 
 func main() {
