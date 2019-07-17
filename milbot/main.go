@@ -11,6 +11,7 @@ import (
 	"github.com/high-moctane/milbot/milbot/plugins/atnd"
 	"github.com/high-moctane/milbot/milbot/plugins/exit"
 	"github.com/high-moctane/milbot/milbot/plugins/hello"
+	"github.com/high-moctane/milbot/milbot/plugins/help"
 	"github.com/high-moctane/milbot/milbot/plugins/kitakunoki"
 	"github.com/high-moctane/milbot/milbot/plugins/peng"
 	"github.com/high-moctane/milbot/milbot/plugins/ping"
@@ -29,6 +30,7 @@ var plugins = []plugin.Plugin{
 	atnd.New(),
 	exit.New(),
 	hello.New(),
+	help.New(),
 	kitakunoki.New(),
 	peng.New(),
 	ping.New(),
