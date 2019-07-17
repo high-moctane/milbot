@@ -56,6 +56,9 @@ func New() *Plugin {
 
 // Serve では kitakunoki を発見する
 func (p *Plugin) Serve(api *slack.Client, ch <-chan slack.RTMEvent) {
+	// 帰宅のアラートサーバーを立てる
+	go kitakunoAlertServer(api, p)
+
 	for msg := range ch {
 		// コンストラクトに失敗したらできることがないので終了
 		if !p.ok {
