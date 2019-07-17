@@ -9,7 +9,7 @@ import (
 )
 
 // help を発動する先頭文字列
-var helpPrefix = regexp.MustCompile(`(?i)^milbot script help`)
+var helpPrefix = regexp.MustCompile(`(?i)^milbot verse help`)
 
 // jiritsugo で始まる句かどうかで文頭になれるかどうかを判定する
 var jiritsugo = []string{"動詞", "形容詞", "形容動詞", "名詞", "連体詞", "副詞", "接続詞", "感動詞", "フィラー"}
@@ -52,7 +52,7 @@ func (p Plugin) Stop() error {
 func help(api *slack.Client, ev *slack.MessageEvent) {
 	botutils.LogEventReceive(api, ev, "atnd help")
 
-	mes := "" // TODO
+	mes := "575，57577，7775 に反応します(｀･ω･´)"
 
 	botutils.SendMessageWithLog(api, ev, mes)
 }
