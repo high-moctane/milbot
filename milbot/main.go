@@ -116,7 +116,7 @@ func newAPI() (*slack.Client, error) {
 
 	return slack.New(
 		token,
-		slack.OptionDebug(true), // これを true にすると通信の詳細が表示される
+		slack.OptionDebug(false), // これを true にすると通信の詳細が表示される
 		slack.OptionLog(logger),
 	), nil
 }
