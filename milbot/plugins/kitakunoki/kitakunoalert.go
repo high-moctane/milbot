@@ -15,15 +15,7 @@ func kitakunoAlertServer(api *slack.Client, plugin *Plugin) {
 		<-time.NewTimer(kitakunoDuration()).C
 
 		if atnd.Exist() {
-			_, ts, _, err := api.SendMessage(
-				"random",
-				slack.MsgOptionText(plugin.kitakunoMessage(), true),
-			)
-			if err != nil {
-				botutils.LogBoth("kitakunoAlert error: ", err)
-				continue
-			}
-			botutils.Log("kitakunoAlert done at ", ts)
+			botutils.SendMessageWithLog(api, "#random", plugin.kitakunoMessage())
 		}
 	}
 }
