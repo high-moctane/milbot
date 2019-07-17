@@ -66,5 +66,5 @@ func (p Plugin) Stop() error {
 }
 
 func help(api *slack.Client, ev *slack.MessageEvent) {
-	botutils.SendMessageWithLog(api, ev, helpMessage)
+	botutils.SendMessageWithLog(api, ev.Channel, helpMessage)
 }

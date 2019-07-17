@@ -30,7 +30,7 @@ func (p Plugin) Serve(api *slack.Client, ch <-chan slack.RTMEvent) {
 
 			if validPrefix.MatchString(ev.Text) {
 				botutils.LogEventReceive(api, ev, "ping")
-				botutils.SendMessageWithLog(api, ev, "pong(｀･ω･´)")
+				botutils.SendMessageWithLog(api, ev.Channel, "pong(｀･ω･´)")
 			}
 		}
 	}

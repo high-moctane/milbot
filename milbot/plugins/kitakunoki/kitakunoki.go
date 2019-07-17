@@ -109,7 +109,7 @@ func help(api *slack.Client, ev *slack.MessageEvent) {
 	mes := "`帰宅の木` に反応して今日の帰宅の木をお知らせします。\n" +
 		"また `帰宅の木` が含まれるメッセージに絵文字をつけます(｀･ω･´)"
 
-	botutils.SendMessageWithLog(api, ev, mes)
+	botutils.SendMessageWithLog(api, ev.Channel, mes)
 }
 
 // kitakunonae を植える
@@ -136,7 +136,7 @@ func (p *Plugin) kitakunoki(api *slack.Client, ev *slack.MessageEvent) {
 		// ここで return はしない
 	}
 
-	botutils.SendMessageWithLog(api, ev, p.kitakunoMessage())
+	botutils.SendMessageWithLog(api, ev.Channel, p.kitakunoMessage())
 }
 
 // kitakunoAddReaction は適当な木を生やす
