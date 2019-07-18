@@ -26,6 +26,20 @@
   version = "v1.4.0"
 
 [[projects]]
+  digest = "1:77e76597daf43acf8b985acb8d3b67cbe39cc63b85bf4db88ac3dadd0a8aabc8"
+  name = "github.com/ikawaha/kagome"
+  packages = [
+    "internal/da",
+    "internal/dic",
+    "internal/dic/data",
+    "internal/lattice",
+    "tokenizer",
+  ]
+  pruneopts = "UT"
+  revision = "9eda13eaaba0a4bfac2e40b1626ef6529ad8f75d"
+  version = "v1.10.0"
+
+[[projects]]
   digest = "1:1f4b55d7c57681ad91b7ce3ac7c8e7b139e6dd2f477c5f87e6a7749d298645dc"
   name = "github.com/joho/godotenv"
   packages = [
@@ -87,10 +101,12 @@
   analyzer-version = 1
   input-imports = [
     "github.com/go-redis/redis",
+    "github.com/ikawaha/kagome/tokenizer",
     "github.com/joho/godotenv/autoload",
     "github.com/nlopes/slack",
     "golang.org/x/net/html",
     "golang.org/x/text/encoding/japanese",
+    "golang.org/x/text/transform",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
