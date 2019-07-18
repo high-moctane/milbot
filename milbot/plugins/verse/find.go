@@ -88,6 +88,9 @@ func topPhrase(morphs morphemes, morae int, jiritsugoFlag bool) (morphemes, bool
 		if m.isOmitPOS() {
 			return nil, false
 		}
+		if m.hasASCII() {
+			return nil, false
+		}
 
 		phrase = append(phrase, m)
 		sum += m.moraLen

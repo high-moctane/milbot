@@ -4,6 +4,7 @@ package verse
 
 import (
 	"strings"
+	"unicode/utf8"
 
 	"github.com/ikawaha/kagome/tokenizer"
 )
@@ -82,6 +83,11 @@ func (m *morpheme) isOmitPOS() bool {
 		}
 	}
 	return false
+}
+
+// hasASCII は m.surface に ASCII 文字があるかどうかを判別します
+func (m *morpheme) hasASCII() bool {
+	return utf8.RuneCountInString(m.surface) == len(m.surface)
 }
 
 // morphemes は morpheme 列です
