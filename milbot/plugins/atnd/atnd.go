@@ -227,7 +227,7 @@ func atnd(api *slack.Client, ev *slack.MessageEvent) {
 
 	mes := "現在部屋には\n"
 	for _, addr := range exists {
-		mes += addrMember[addr]
+		mes += addrMember[addr] + "\n"
 	}
 	mes += "が在室しています(｀･ω･´)"
 	go botutils.SendMessageWithLog(api, ev.Channel, mes)
