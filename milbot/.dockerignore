@@ -1,0 +1,7 @@
+/botutils
+/plugin
+/plugins
+/vendor
+/.gitignore
+/Gopkg.*
+/main.go
