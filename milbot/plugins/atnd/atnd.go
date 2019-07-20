@@ -320,12 +320,10 @@ func getAtndPort() (string, error) {
 
 // removeBlanks は strs の中から "" の要素を取り除く
 func removeBlanks(strs []string) []string {
-	ret := make([]string, len(strs))
-	copy(ret, strs)
-	for i := 0; i < len(ret); i++ {
-		if ret[i] == "" {
-			ret[i], ret[len(strs)-1] = ret[len(strs)-1], ret[i]
-			ret = ret[:len(strs)-1]
+	ret := make([]string, 0, len(strs))
+	for _, s := range strs {
+		if s != "" {
+			ret = append(ret, s)
 		}
 	}
 	return ret
