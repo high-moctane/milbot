@@ -82,15 +82,15 @@ func run(api *slack.Client, ev *slack.MessageEvent) {
 
 // findSenryu は text から 575 を探して返します
 func findSenryu(text string) []string {
-	return find(text, []int{5, 7, 5}, []bool{true, false, false})
+	return find(text, []int{5, 7, 5}, []bool{true, true, true})
 }
 
 // findTanka は text から 57577 を探して返します
 func findTanka(text string) []string {
-	return find(text, []int{5, 7, 5, 7, 7}, []bool{true, false, false, true, false})
+	return find(text, []int{5, 7, 5, 7, 7}, []bool{true, true, true, true, true})
 }
 
 // findDodoitsu は text から 7775 を探して返します
 func findDodoitsu(text string) []string {
-	return find(text, []int{7, 7, 7, 5}, []bool{true, false, false, false})
+	return find(text, []int{7, 7, 7, 5}, []bool{true, true, true, true})
 }
