@@ -1,6 +1,7 @@
 package atnd
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -9,9 +10,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/high-moctane/milbot/milbot/botutils"
-
 	"github.com/go-redis/redis"
+	"github.com/high-moctane/milbot/milbot/botutils"
 	"github.com/nlopes/slack"
 )
 
@@ -41,34 +41,35 @@ func New() Plugin {
 }
 
 // Serve では atnd のクエリを振り分ける
-func (p Plugin) Serve(api *slack.Client, ch <-chan slack.RTMEvent) {
-	for msg := range ch {
-		switch ev := msg.Data.(type) {
-		case *slack.MessageEvent:
-			// bot かどうかを判定
-			if ev.BotID != "" {
-				continue
-			}
+func (p Plugin) Serve(ctx context.Context, api *slack.Client, ch <-chan slack.RTMEvent) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
 
-			if helpPrefix.MatchString(ev.Text) {
-				go help(api, ev)
-			} else if addPrefix.MatchString(ev.Text) {
-				go add(api, ev)
-			} else if removePrefix.MatchString(ev.Text) {
-				go remove(api, ev)
-			} else if listPrefix.MatchString(ev.Text) {
-				go list(api, ev)
-			} else if atndPrefix.MatchString(ev.Text) {
-				// これは並列実行できない！
-				atnd(api, ev)
+		case msg := <-ch:
+			switch ev := msg.Data.(type) {
+			case *slack.MessageEvent:
+				// bot かどうかを判定
+				if ev.BotID != "" {
+					continue
+				}
+
+				if helpPrefix.MatchString(ev.Text) {
+					go help(api, ev)
+				} else if addPrefix.MatchString(ev.Text) {
+					go add(api, ev)
+				} else if removePrefix.MatchString(ev.Text) {
+					go remove(api, ev)
+				} else if listPrefix.MatchString(ev.Text) {
+					go list(api, ev)
+				} else if atndPrefix.MatchString(ev.Text) {
+					// これは並列実行できない！
+					atnd(api, ev)
+				}
 			}
 		}
 	}
-}
-
-// Stop は実際なにもしないぞ！
-func (p Plugin) Stop() error {
-	return nil
 }
 
 // help のメッセージを送信する

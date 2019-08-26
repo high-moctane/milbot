@@ -1,6 +1,7 @@
 package script
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -10,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/high-moctane/milbot/milbot/botutils"
-
 	"github.com/nlopes/slack"
 )
 
@@ -28,30 +28,31 @@ func New() Plugin {
 }
 
 // Serve では atnd のクエリを振り分ける
-func (p Plugin) Serve(api *slack.Client, ch <-chan slack.RTMEvent) {
-	for msg := range ch {
-		switch ev := msg.Data.(type) {
-		case *slack.MessageEvent:
-			// bot かどうかを判定
-			// 謎のコメントアウト
-			// if ev.BotID != "" {
-			// 	continue
-			// }
+func (p Plugin) Serve(ctx context.Context, api *slack.Client, ch <-chan slack.RTMEvent) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
 
-			if helpPrefix.MatchString(ev.Text) {
-				go help(api, ev)
-			} else if bashPrefix.MatchString(ev.Text) {
-				go bash(api, ev)
-			} else if python3Prefix.MatchString(ev.Text) {
-				go python3(api, ev)
+		case msg := <-ch:
+			switch ev := msg.Data.(type) {
+			case *slack.MessageEvent:
+				// bot かどうかを判定
+				// 謎のコメントアウト
+				// if ev.BotID != "" {
+				// 	continue
+				// }
+
+				if helpPrefix.MatchString(ev.Text) {
+					go help(api, ev)
+				} else if bashPrefix.MatchString(ev.Text) {
+					go bash(api, ev)
+				} else if python3Prefix.MatchString(ev.Text) {
+					go python3(api, ev)
+				}
 			}
 		}
 	}
-}
-
-// Stop は実際なにもしないぞ！
-func (p Plugin) Stop() error {
-	return nil
 }
 
 // help のメッセージを送信する
