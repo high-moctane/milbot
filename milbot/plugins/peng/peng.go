@@ -1,6 +1,7 @@
 package peng
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"math/rand"
@@ -10,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/high-moctane/milbot/milbot/botutils"
-
 	"github.com/nlopes/slack"
 )
 
@@ -30,27 +30,28 @@ func New() Plugin {
 }
 
 // Serve では "milbot restart" に反応して終了コード 1 で終了する
-func (p Plugin) Serve(api *slack.Client, ch <-chan slack.RTMEvent) {
-	for msg := range ch {
-		switch ev := msg.Data.(type) {
-		case *slack.MessageEvent:
-			// bot かどうかを判定
-			if ev.BotID != "" {
-				continue
-			}
+func (p Plugin) Serve(ctx context.Context, api *slack.Client, ch <-chan slack.RTMEvent) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
 
-			if helpPrefix.MatchString(ev.Text) {
-				go help(api, ev)
-			} else if pengPrefix.MatchString(ev.Text) {
-				go peng(api, ev)
+		case msg := <-ch:
+			switch ev := msg.Data.(type) {
+			case *slack.MessageEvent:
+				// bot かどうかを判定
+				if ev.BotID != "" {
+					continue
+				}
+
+				if helpPrefix.MatchString(ev.Text) {
+					go help(api, ev)
+				} else if pengPrefix.MatchString(ev.Text) {
+					go peng(api, ev)
+				}
 			}
 		}
 	}
-}
-
-// Stop は実際なにもしないぞ！
-func (p Plugin) Stop() error {
-	return nil
 }
 
 func help(api *slack.Client, ev *slack.MessageEvent) {

@@ -1,6 +1,7 @@
 package ping
 
 import (
+	"context"
 	"regexp"
 
 	"github.com/high-moctane/milbot/milbot/botutils"
@@ -19,24 +20,25 @@ func New() Plugin {
 }
 
 // Serve では "milbot ping" に反応して "pong(｀･ω･´)" と返します
-func (p Plugin) Serve(api *slack.Client, ch <-chan slack.RTMEvent) {
-	for msg := range ch {
-		switch ev := msg.Data.(type) {
-		case *slack.MessageEvent:
-			// bot かどうかを判定
-			if ev.BotID != "" {
-				continue
-			}
+func (p Plugin) Serve(ctx context.Context, api *slack.Client, ch <-chan slack.RTMEvent) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
 
-			if validPrefix.MatchString(ev.Text) {
-				botutils.LogEventReceive(api, ev, "ping")
-				botutils.SendMessageWithLog(api, ev.Channel, "pong(｀･ω･´)")
+		case msg := <-ch:
+			switch ev := msg.Data.(type) {
+			case *slack.MessageEvent:
+				// bot かどうかを判定
+				if ev.BotID != "" {
+					continue
+				}
+
+				if validPrefix.MatchString(ev.Text) {
+					botutils.LogEventReceive(api, ev, "ping")
+					botutils.SendMessageWithLog(api, ev.Channel, "pong(｀･ω･´)")
+				}
 			}
 		}
 	}
-}
-
-// Stop は実際なにもしないぞ！
-func (p Plugin) Stop() error {
-	return nil
 }

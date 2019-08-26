@@ -1,6 +1,7 @@
 package help
 
 import (
+	"context"
 	"regexp"
 
 	"github.com/high-moctane/milbot/milbot/botutils"
@@ -44,25 +45,26 @@ func New() Plugin {
 }
 
 // Serve では "milbot help" に反応して help を返す
-func (p Plugin) Serve(api *slack.Client, ch <-chan slack.RTMEvent) {
-	for msg := range ch {
-		switch ev := msg.Data.(type) {
-		case *slack.MessageEvent:
-			// bot かどうかを判定
-			if ev.BotID != "" {
-				continue
-			}
+func (p Plugin) Serve(ctx context.Context, api *slack.Client, ch <-chan slack.RTMEvent) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
 
-			if helpPrefix.MatchString(ev.Text) {
-				go help(api, ev)
+		case msg := <-ch:
+			switch ev := msg.Data.(type) {
+			case *slack.MessageEvent:
+				// bot かどうかを判定
+				if ev.BotID != "" {
+					continue
+				}
+
+				if helpPrefix.MatchString(ev.Text) {
+					go help(api, ev)
+				}
 			}
 		}
 	}
-}
-
-// Stop は実際なにもしないぞ！
-func (p Plugin) Stop() error {
-	return nil
 }
 
 func help(api *slack.Client, ev *slack.MessageEvent) {

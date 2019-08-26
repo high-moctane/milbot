@@ -1,6 +1,8 @@
 package hello
 
 import (
+	"context"
+
 	"github.com/high-moctane/milbot/milbot/botutils"
 	"github.com/nlopes/slack"
 )
@@ -14,18 +16,19 @@ func New() Plugin {
 }
 
 // Serve では RTM 接続時に ログを出す
-func (p Plugin) Serve(api *slack.Client, ch <-chan slack.RTMEvent) {
-	for msg := range ch {
-		switch msg.Data.(type) {
-		case *slack.HelloEvent:
-			go hello()
+func (p Plugin) Serve(ctx context.Context, api *slack.Client, ch <-chan slack.RTMEvent) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+
+		case msg := <-ch:
+			switch msg.Data.(type) {
+			case *slack.HelloEvent:
+				go hello()
+			}
 		}
 	}
-}
-
-// Stop は実際なにもしないぞ！
-func (p Plugin) Stop() error {
-	return nil
 }
 
 // hello は接続したよのログを出す

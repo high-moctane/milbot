@@ -1,9 +1,12 @@
 package plugin
 
-import "github.com/nlopes/slack"
+import (
+	"context"
 
-// Plugin を実装すると Plugin になれるよ(｀･ω･´)
-type Plugin interface {
-	Serve(*slack.Client, <-chan slack.RTMEvent)
-	Stop() error
+	"github.com/nlopes/slack"
+)
+
+// Server を実装すると Plugin になれるよ(｀･ω･´)
+type Server interface {
+	Serve(context.Context, *slack.Client, <-chan slack.RTMEvent)
 }

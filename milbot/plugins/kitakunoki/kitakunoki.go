@@ -1,6 +1,7 @@
 package kitakunoki
 
 import (
+	"context"
 	"math/rand"
 	"regexp"
 	"strconv"
@@ -55,37 +56,38 @@ func New() *Plugin {
 }
 
 // Serve では kitakunoki を発見する
-func (p *Plugin) Serve(api *slack.Client, ch <-chan slack.RTMEvent) {
+func (p *Plugin) Serve(ctx context.Context, api *slack.Client, ch <-chan slack.RTMEvent) {
 	// 帰宅のアラートサーバーを立てる
 	go kitakunoAlertServer(api, p)
 
-	for msg := range ch {
-		// コンストラクトに失敗したらできることがないので終了
-		if !p.ok {
+	for {
+		select {
+		case <-ctx.Done():
 			return
-		}
 
-		switch ev := msg.Data.(type) {
-		case *slack.MessageEvent:
-			// bot かどうかを判定
-			if ev.BotID != "" {
-				continue
+		case msg := <-ch:
+			// コンストラクトに失敗したらできることがないので終了
+			if !p.ok {
+				return
 			}
 
-			if helpPrefix.MatchString(ev.Text) {
-				go help(api, ev)
-			} else if kitakunonaeRegexp.MatchString(ev.Text) {
-				go kitakunonae(api, ev)
-			} else if kitakunokiRegexp.MatchString(ev.Text) {
-				go p.kitakunoki(api, ev)
+			switch ev := msg.Data.(type) {
+			case *slack.MessageEvent:
+				// bot かどうかを判定
+				if ev.BotID != "" {
+					continue
+				}
+
+				if helpPrefix.MatchString(ev.Text) {
+					go help(api, ev)
+				} else if kitakunonaeRegexp.MatchString(ev.Text) {
+					go kitakunonae(api, ev)
+				} else if kitakunokiRegexp.MatchString(ev.Text) {
+					go p.kitakunoki(api, ev)
+				}
 			}
 		}
 	}
-}
-
-// Stop は実際なにもしないぞ！
-func (p *Plugin) Stop() error {
-	return nil
 }
 
 // choice は帰宅の木から今日の木をランダムに選ぶ

@@ -1,13 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	"github.com/high-moctane/milbot/milbot/botutils"
-
 	"github.com/high-moctane/milbot/milbot/plugin"
 	"github.com/high-moctane/milbot/milbot/plugins/atnd"
 	"github.com/high-moctane/milbot/milbot/plugins/exit"
@@ -24,7 +25,7 @@ import (
 )
 
 // ここにプラグインを列挙していくぞ！
-var plugins = []plugin.Plugin{
+var plugins = []plugin.Server{
 	atnd.New(),
 	exit.New(),
 	hello.New(),
@@ -44,9 +45,6 @@ func main() {
 }
 
 func run() error {
-	// シグナルハンドリング
-	go handleSignal()
-
 	// Slack に接続
 	api, err := newAPI()
 	if err != nil {
@@ -61,8 +59,14 @@ func run() error {
 	eventChs := makeEventChs()
 
 	// プラグインを起動していく
+	ctx, cancel := context.WithCancel(context.Background())
+	wg := new(sync.WaitGroup)
 	for i := 0; i < len(plugins); i++ {
-		go appendPlugin(plugins[i], api, eventChs[i])
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			appendPlugin(ctx, plugins[i], api, eventChs[i])
+		}(i)
 	}
 
 	// ここでイベントを受け取り各プラグインに一斉送信する
@@ -76,14 +80,26 @@ func run() error {
 		}
 	}
 
-	// ここにたどり着いたということは rtm.IncomingEvents がもう受け取れないということ
-	return fmt.Errorf("main loop ended")
+	// signal を受け取って run を終了する
+	s := <-signalChan()
+	switch s {
+	case syscall.SIGTERM:
+		botutils.LogBoth("caught SIGTERM")
+
+	case syscall.SIGINT:
+		botutils.LogBoth("caught SIGINT")
+
+	default:
+		botutils.LogBoth("caught unknown signal: ", s)
+	}
+	cancel()
+	wg.Wait()
+	return fmt.Errorf("exit run")
 }
 
 // appendPlugin を go で呼び出すとプラグインが走り出す
-func appendPlugin(p plugin.Plugin, api *slack.Client, eventCh chan slack.RTMEvent) {
-	p.Serve(api, eventCh)
-	defer p.Stop()
+func appendPlugin(ctx context.Context, p plugin.Server, api *slack.Client, eventCh chan slack.RTMEvent) {
+	p.Serve(ctx, api, eventCh)
 }
 
 // makeEventChs は各プラグインに与える chan の列を生成する
@@ -119,20 +135,8 @@ func newAPI() (*slack.Client, error) {
 }
 
 // handleSignal でシグナルをハンドリングします
-func handleSignal() {
+func signalChan() <-chan os.Signal {
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
-	s := <-ch
-	switch s {
-	case syscall.SIGTERM:
-		botutils.LogBoth("caught SIGTERM")
-		os.Exit(1)
-
-	case syscall.SIGINT:
-		botutils.LogBoth("caught SIGINT")
-		os.Exit(1)
-
-	default:
-		botutils.LogBoth("caught unknown signal: ", s)
-	}
+	return ch
 }

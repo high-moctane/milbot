@@ -1,6 +1,7 @@
 package verse
 
 import (
+	"context"
 	"regexp"
 	"strings"
 
@@ -26,26 +27,27 @@ func New() Plugin {
 }
 
 // Serve では atnd のクエリを振り分ける
-func (p Plugin) Serve(api *slack.Client, ch <-chan slack.RTMEvent) {
-	for msg := range ch {
-		switch ev := msg.Data.(type) {
-		case *slack.MessageEvent:
-			// bot かどうかを判定
-			if ev.BotID != "" {
-				continue
-			}
+func (p Plugin) Serve(ctx context.Context, api *slack.Client, ch <-chan slack.RTMEvent) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
 
-			if helpPrefix.MatchString(ev.Text) {
-				go help(api, ev)
+		case msg := <-ch:
+			switch ev := msg.Data.(type) {
+			case *slack.MessageEvent:
+				// bot かどうかを判定
+				if ev.BotID != "" {
+					continue
+				}
+
+				if helpPrefix.MatchString(ev.Text) {
+					go help(api, ev)
+				}
+				go run(api, ev)
 			}
-			go run(api, ev)
 		}
 	}
-}
-
-// Stop は実際なにもしないぞ！
-func (p Plugin) Stop() error {
-	return nil
 }
 
 // help のメッセージを送信する
