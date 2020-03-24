@@ -1,7 +1,0 @@
-[Unit]
-Description=milbot server daemons
-Documentation=https://github.com/high-moctane/milbot
-Requires=milbot-bluetooth.service milbot-redis.service milbot.service
-
-[Install]
-WantedBy=default.target
