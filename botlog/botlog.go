@@ -18,7 +18,6 @@ const envMilbotLogWebhookURL = "MILBOT_LOG_WEBHOOK_URL"
 
 // Send は stderr と #milbot_log にログを吐きます。
 func Send(v ...interface{}) {
-	log.Println(v...)
 	if err := postMilbotLogWebhook(fmt.Sprint(v...)); err != nil {
 		log.Println(err)
 	}
@@ -27,7 +26,6 @@ func Send(v ...interface{}) {
 // Sendf は stderr と #milbot_log にログを吐きます。Sprintf みたいな感じに
 // 使います。
 func Sendf(format string, v ...interface{}) {
-	log.Printf(format, v...)
 	if err := postMilbotLogWebhook(fmt.Sprintf(format, v...)); err != nil {
 		log.Println(err)
 	}
