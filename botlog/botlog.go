@@ -1,6 +1,7 @@
 package botlog
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -8,8 +9,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-
-	"github.com/high-moctane/milbot/boterrors"
 )
 
 // envMilbotLogWebhookURL は #milbot_log に送信するための Webhook URL の
@@ -66,7 +65,7 @@ func makeWebhookRequestBody(msg string) *strings.Reader {
 func getMilbotLogWebhookURL() (url string, err error) {
 	url, ok := os.LookupEnv(envMilbotLogWebhookURL)
 	if !ok {
-		err = boterrors.NewErrInvalidEnv(envMilbotLogWebhookURL)
+		err = errors.New("not found " + envMilbotLogWebhookURL)
 		return
 	}
 	return
