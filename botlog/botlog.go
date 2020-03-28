@@ -1,6 +1,7 @@
 package botlog
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -15,36 +16,51 @@ import (
 // 環境変数です。
 const envMilbotLogWebhookURL = "MILBOT_LOG_WEBHOOK_URL"
 
-// Send は stderr と #milbot_log にログを吐きます。
+// Send は #milbot_log にログを吐きます。
 func Send(v ...interface{}) {
-	if err := postMilbotLogWebhook(fmt.Sprint(v...)); err != nil {
-		log.Println(err)
+	SendContext(context.Background(), v...)
+}
+
+// SendContext は #milbot_log にログを吐きます。context.Context が
+// 使えます。
+func SendContext(ctx context.Context, v ...interface{}) {
+	if err := postMilbotLogWebhookContext(ctx, fmt.Sprint(v...)); err != nil {
+		log.Println(fmt.Errorf("can't send msg to #milbot_log: %w", err))
 	}
 }
 
-// Sendf は stderr と #milbot_log にログを吐きます。Sprintf みたいな感じに
+// Sendf は #milbot_log にログを吐きます。Sprintf みたいな感じに
 // 使います。
 func Sendf(format string, v ...interface{}) {
-	if err := postMilbotLogWebhook(fmt.Sprintf(format, v...)); err != nil {
-		log.Println(err)
+	SendfContext(context.Background(), format, v...)
+}
+
+// SendfContext は #milbot_log にログを吐きます。Sprintf みたいな感じに
+// 使います。context.Context が使えます。
+func SendfContext(ctx context.Context, format string, v ...interface{}) {
+	if err := postMilbotLogWebhookContext(ctx, fmt.Sprintf(format, v...)); err != nil {
+		log.Println(fmt.Errorf("can't send msg to #milbot_log: %w", err))
 	}
 }
 
 // postMilbotLogWebhook は msg を #milbot_log に送信します。
-func postMilbotLogWebhook(msg string) error {
+func postMilbotLogWebhookContext(ctx context.Context, msg string) error {
 	url, err := getMilbotLogWebhookURL()
 	if err != nil {
 		return err
 	}
 
-	resp, err := http.Post(url, "application/json", makeWebhookRequestBody(msg))
+	req, err := http.NewRequestWithContext(ctx, "POST", url, makeWebhookRequestBody(msg))
 	if err != nil {
-		return err
+		return fmt.Errorf("can't create a request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("post error: %w", err)
 	}
 	defer resp.Body.Close()
-	if _, err := io.Copy(ioutil.Discard, resp.Body); err != nil {
-		return err
-	}
+	defer io.Copy(ioutil.Discard, resp.Body)
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("postMilbotLogWebhook failed with status %s",
@@ -65,7 +81,7 @@ func makeWebhookRequestBody(msg string) *strings.Reader {
 func getMilbotLogWebhookURL() (url string, err error) {
 	url, ok := os.LookupEnv(envMilbotLogWebhookURL)
 	if !ok {
-		err = errors.New("not found " + envMilbotLogWebhookURL)
+		err = errors.New(envMilbotLogWebhookURL + " not found")
 		return
 	}
 	return

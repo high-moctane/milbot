@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"os"
-	"regexp"
 
 	"github.com/slack-go/slack"
 )
@@ -22,20 +21,11 @@ func newSlackClient() (*slack.Client, error) {
 	return client, err
 }
 
-// getSkackClientSecret は環境変数から Slack API token を取得します。
+// getSlackClientSecret は環境変数から Slack API token を取得します。
 func getSlackClientSecret() (string, error) {
 	token, ok := os.LookupEnv(envSlackClientSecret)
 	if !ok {
-		return "", errors.New("not found " + envSlackClientSecret)
+		return "", errors.New(envSlackClientSecret + " not found")
 	}
 	return token, nil
-}
-
-// isExitMessage は event が milbot を終了するメッセージかどうか判定します。
-func isExitMessage(event slack.RTMEvent) bool {
-	ev, ok := event.Data.(*slack.MessageEvent)
-	if !ok {
-		return false
-	}
-	return regexp.MustCompile(`(?i)^mil exit`).MatchString(ev.Text)
 }

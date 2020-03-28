@@ -8,6 +8,7 @@ import (
 
 	"github.com/high-moctane/milbot/botlog"
 	"github.com/high-moctane/milbot/botplugin"
+	"github.com/high-moctane/milbot/botplugins/exit"
 	"github.com/high-moctane/milbot/botplugins/ping"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/slack-go/slack"
@@ -19,6 +20,7 @@ var pluginTimeout = 120 * time.Second
 // plugins にプラグインを入れていくぞ(｀･ω･´)！
 var plugins = []botplugin.Plugin{
 	ping.New(),
+	exit.New(),
 }
 
 func main() {
@@ -31,8 +33,9 @@ func main() {
 // run は実質の main 関数です。err != nil のときに 0 でない終了コードで
 // プログラムを終えます。
 func run() error {
-	// 起動ログ
+	// ログ
 	log.Print("milbot launch(｀･ω･´)！")
+	defer log.Print("milbot exited(｀･ω･´)")
 
 	// プラグインの起動
 	for _, plg := range plugins {
@@ -64,12 +67,6 @@ func run() error {
 	for event := range rtm.IncomingEvents {
 		if err := detectUncontinuableRTMEvent(&event); err != nil {
 			return err
-		}
-
-		if isExitMessage(event) {
-			log.Printf("received exit message")
-			botlog.Sendf("received exit message")
-			return nil
 		}
 
 		for _, plg := range append(plugins, helpPlugin) {

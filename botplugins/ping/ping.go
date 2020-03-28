@@ -49,7 +49,7 @@ func (*Plugin) isValidEvent(event slack.RTMEvent) bool {
 
 // Help でヘルプメッセージを返します。
 func (p *Plugin) Help() string {
-	return "## Ping\n" +
+	return "[Ping]\n" +
 		"`milbot ping` に pong を返します。\n" +
 		"Bot の生存確認に使ってください(｀･ω･´)"
 }
