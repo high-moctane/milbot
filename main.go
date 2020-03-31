@@ -62,7 +62,7 @@ func run() error {
 	go rtm.ManageConnection()
 	defer rtm.Disconnect()
 
-	// 受け取ったイベントをプラグインに渡していく
+	// 受け取ったイベントを処理する
 	ctx := context.Background()
 	for event := range rtm.IncomingEvents {
 		if err := detectUncontinuableRTMEvent(&event); err != nil {
@@ -70,17 +70,20 @@ func run() error {
 		}
 
 		for _, plg := range append(plugins, helpPlugin) {
-			ctx, cancel := context.WithTimeout(ctx, pluginTimeout)
-			go func(plg botplugin.Plugin) {
-				if err := plg.Serve(ctx, client, event); err != nil {
-					log.Print(err)
-				}
-				cancel()
-			}(plg)
+			go sendEventToPlugin(ctx, plg, client, event)
 		}
 	}
 
 	return nil
+}
+
+// sendEventToPlugin は plugin に event を渡します。
+func sendEventToPlugin(ctx context.Context, plg botplugin.Plugin, client *slack.Client, event slack.RTMEvent) {
+	newCtx, cancel := context.WithTimeout(ctx, pluginTimeout)
+	defer cancel()
+	if err := plg.Serve(newCtx, client, event); err != nil {
+		log.Print(err)
+	}
 }
 
 // detectErrorEvent Bot を終了すべき RTMEvent を見つけます。

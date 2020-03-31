@@ -45,7 +45,7 @@ func SendfContext(ctx context.Context, format string, v ...interface{}) {
 
 // postMilbotLogWebhook は msg を #milbot_log に送信します。
 func postMilbotLogWebhookContext(ctx context.Context, msg string) error {
-	url, err := getMilbotLogWebhookURL()
+	url, err := milbotLogWebhookURL()
 	if err != nil {
 		return err
 	}
@@ -76,9 +76,9 @@ func makeWebhookRequestBody(msg string) *strings.Reader {
 	return strings.NewReader(`{"text": "` + msg + `"}`)
 }
 
-// getWebhookURL は #milbot_log に送信できる Webhook の URL を環境変数から
+// milbotLogWebhookURL は #milbot_log に送信できる Webhook の URL を環境変数から
 // 取得します。取得できなかった場合は boterrors.NewErrInvalidEnv を返します。
-func getMilbotLogWebhookURL() (url string, err error) {
+func milbotLogWebhookURL() (url string, err error) {
 	url, ok := os.LookupEnv(envMilbotLogWebhookURL)
 	if !ok {
 		err = errors.New(envMilbotLogWebhookURL + " not found")
