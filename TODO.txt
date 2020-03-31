@@ -1,0 +1,23 @@
+sigint の捕捉
+
+エラーメッセージの改良
+
+Serve に client 渡さなくて良くない？ Start で渡したら？
+
+libatnd はドキュメントをきれいにする。
+
+定期的にサーチするようにする。（5分くらい？）
+
+mil を milbot に直す
+
+アドレスの暗号化
+
+log を消す
+
+json の最後に改行
+
+member search members をコピーしちゃったほうが mutex 的にうれしい
+
+Makefile の準備
+
+.atnd_config.json

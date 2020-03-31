@@ -1,4 +1,3 @@
-// TODO エラーの中身を書き換える
 package libatnd
 
 import (
@@ -24,19 +23,25 @@ const configFileName = "atnd_config.json"
 // configPerm は config ファイルのパーミッションです。
 const configPerm = 0666
 
-// atnd は attend のシングルトンです。
-var atnd *attend
+// atnd は Atnd のシングルトンです。
+var atnd *Atnd
 
 func init() {
 	var err error
 	atnd, err = newAttend()
 	if err != nil {
-		log.Fatal("create attend error:", err)
+		log.Fatal("create Atnd error:", err)
 	}
 }
 
-// errEmptyName は name に空文字列を指定されたときのエラーです。
-var errEmptyName = errors.New("empty name is forbidden")
+// InvalidNameError は name が使えないときのエラーです。
+type InvalidNameError struct {
+	Name string
+}
+
+func (e InvalidNameError) Error() string {
+	return fmt.Sprintf("invalid name: %q", e.Name)
+}
 
 // InvalidMACAddressError は不正な MAC アドレスを示します。
 type InvalidMACAddressError struct {
@@ -58,7 +63,8 @@ func (e MemberNotExistError) Error() string {
 	return fmt.Sprintf("member not exist: %q", e.Name)
 }
 
-var errBluetoothNotAvailable = errors.New("bluetooth not available")
+// ErrBluetoothNotAvailable は Bluetooth が落ちてることを示すエラーです。
+var ErrBluetoothNotAvailable = errors.New("bluetooth not available")
 
 // IsValidMACAddress は addr が有効な MAC アドレスかどうかを返します。
 func IsValidMACAddress(addr string) bool {
@@ -83,8 +89,11 @@ func IsValidMACAddress(addr string) bool {
 	return true
 }
 
-// attend は在室判定をする構造体です。
-type attend struct {
+// ErrL2pingNotFound は l2ping が $PATH にないときのエラーです。
+var ErrL2pingNotFound = errors.New("l2ping not found in $PATH")
+
+// Atnd は在室判定をする構造体です。
+type Atnd struct {
 	// 設定ファイルのパスです。
 	confPath string
 
@@ -102,9 +111,14 @@ type attend struct {
 	semaSearchMember chan struct{}
 }
 
-// newAttend は attend を作って返します。
-func newAttend() (*attend, error) {
-	a := new(attend)
+// New はシングルトンの Atnd を返します。
+func New() *Atnd {
+	return atnd
+}
+
+// newAttend は Atnd を作って返します。
+func newAttend() (*Atnd, error) {
+	a := new(Atnd)
 
 	var err error
 	a.confPath, err = a.configPath()
@@ -125,7 +139,7 @@ func newAttend() (*attend, error) {
 }
 
 // initConfig は必要であれば config ファイルを生成して a.config を初期化します。
-func (a *attend) initConfig() error {
+func (a *Atnd) initConfig() error {
 	// config ファイルが無ければ生成
 	_, err := os.Stat(a.confPath)
 	if os.IsNotExist(err) {
@@ -148,7 +162,7 @@ func (a *attend) initConfig() error {
 }
 
 // createConfigFile は config ファイルを生成します。
-func (a *attend) createConfigFile() error {
+func (a *Atnd) createConfigFile() error {
 	conf := newConfig()
 
 	bytes, err := json.MarshalIndent(conf, "", "  ")
@@ -164,7 +178,7 @@ func (a *attend) createConfigFile() error {
 }
 
 // loadConfigFile は設定ファイルをファイルから読みます。
-func (a *attend) loadConfigFile() (conf *config, err error) {
+func (a *Atnd) loadConfigFile() (conf *config, err error) {
 	bytes, err := ioutil.ReadFile(a.confPath)
 	if err != nil {
 		err = fmt.Errorf("cannot read config file: %w", err)
@@ -180,7 +194,7 @@ func (a *attend) loadConfigFile() (conf *config, err error) {
 }
 
 // dumpConfig は config を書き出します。
-func (a *attend) dumpConfig() error {
+func (a *Atnd) dumpConfig() error {
 	bytes, err := json.MarshalIndent(a.config, "", "  ")
 	if err != nil {
 		return fmt.Errorf("config marshal error: %w", err)
@@ -194,7 +208,7 @@ func (a *attend) dumpConfig() error {
 }
 
 // configPath は設定ファイルの場所を返します。
-func (*attend) configPath() (string, error) {
+func (*Atnd) configPath() (string, error) {
 	executable, err := os.Executable()
 	if err != nil {
 		return "", fmt.Errorf("cannot evaluate executable path: %w", err)
@@ -209,16 +223,17 @@ func (*attend) configPath() (string, error) {
 }
 
 // initStatus は a.config から a.status を初期化します。
-func (a *attend) initStatus() {
+func (a *Atnd) initStatus() {
 	a.muStatus = new(sync.RWMutex)
 
+	a.status = map[string]*time.Time{}
 	for _, member := range a.config.Members {
 		a.status[member.Name] = nil
 	}
 }
 
 // Status は出席状況を返します。最後に在室した時間の近い順にソートされています。
-func (a *attend) Status() []*Attendance {
+func (a *Atnd) Status() []*Attendance {
 	res := []*Attendance{}
 
 	a.muStatus.RLock()
@@ -237,12 +252,12 @@ func (a *attend) Status() []*Attendance {
 }
 
 // SetMember は name を addr の状態にセットします。
-func (a *attend) SetMember(name, addr string) error {
+func (a *Atnd) SetMember(name, addr string) error {
 	if name == "" {
-		return errEmptyName
+		return InvalidNameError{Name: name}
 	}
 	if !IsValidMACAddress(addr) {
-		return &InvalidMACAddressError{Address: addr}
+		return InvalidMACAddressError{Address: addr}
 	}
 
 	a.muConfig.Lock()
@@ -270,13 +285,13 @@ func (a *attend) SetMember(name, addr string) error {
 }
 
 // addMember はメンバー情報を追加します。
-func (a *attend) addMember(name, addr string) {
+func (a *Atnd) addMember(name, addr string) {
 	newMember := member{Name: name, Address: addr}
 	a.config.Members = append(a.config.Members, &newMember)
 }
 
 // updateMember は name の addr を変更します。
-func (a *attend) updateMember(name, addr string) {
+func (a *Atnd) updateMember(name, addr string) {
 	for i := range a.config.Members {
 		if a.config.Members[i].Name == name {
 			a.config.Members[i].Address = addr
@@ -286,22 +301,25 @@ func (a *attend) updateMember(name, addr string) {
 }
 
 // DeleteMember は name のメンバーを消し去ります。
-func (a *attend) DeleteMember(name string) error {
+func (a *Atnd) DeleteMember(name string) error {
 	a.muConfig.Lock()
 	defer a.muConfig.Unlock()
 
 	for i := 0; i < len(a.config.Members); i++ {
 		if a.config.Members[i].Name == name {
 			a.config.Members = append(a.config.Members[:i], a.config.Members[i+1:]...)
+			if err := a.dumpConfig(); err != nil {
+				return fmt.Errorf("delete member error: %w", err)
+			}
 			return nil
 		}
 	}
 
-	return &MemberNotExistError{Name: name}
+	return MemberNotExistError{Name: name}
 }
 
 // SearchContext はメンバーをサーチして出席している人のリストを返します。
-func (a *attend) SearchContext(ctx context.Context) ([]*Attendance, error) {
+func (a *Atnd) SearchContext(ctx context.Context) ([]*Attendance, error) {
 	res := []*Attendance{}
 
 	select {
@@ -309,6 +327,7 @@ func (a *attend) SearchContext(ctx context.Context) ([]*Attendance, error) {
 		return nil, ctx.Err()
 
 	case a.semaSearch <- struct{}{}:
+		defer func() { <-a.semaSearch }()
 
 		for _, mem := range a.config.Members {
 			attendance, err := a.SearchMemberContext(ctx, mem.Name)
@@ -324,13 +343,13 @@ func (a *attend) SearchContext(ctx context.Context) ([]*Attendance, error) {
 	return res, nil
 }
 
-// SearchContext はメンバーをサーチして出席している人のリストを返します。
-func (a *attend) Search() ([]*Attendance, error) {
+// Search はメンバーをサーチして出席している人のリストを返します。
+func (a *Atnd) Search() ([]*Attendance, error) {
 	return a.SearchContext(context.Background())
 }
 
 // SearchMemberContext はひとりのメンバーをサーチします。いなかったら nil です。
-func (a *attend) SearchMemberContext(ctx context.Context, name string) (*Attendance, error) {
+func (a *Atnd) SearchMemberContext(ctx context.Context, name string) (*Attendance, error) {
 	addr, err := a.findAddr(name)
 	if err != nil {
 		return nil, fmt.Errorf("cannot find address: %w", err)
@@ -340,7 +359,9 @@ func (a *attend) SearchMemberContext(ctx context.Context, name string) (*Attenda
 	case <-ctx.Done():
 		return nil, ctx.Err()
 
-	case <-a.semaSearchMember:
+	case a.semaSearchMember <- struct{}{}:
+		defer func() { <-a.semaSearchMember }()
+
 		exist, err := a.sendPing(ctx, addr)
 		if err != nil {
 			return nil, fmt.Errorf("search member error: %w", err)
@@ -357,7 +378,7 @@ func (a *attend) SearchMemberContext(ctx context.Context, name string) (*Attenda
 }
 
 // findAddr は name に対応する address を返します。
-func (a *attend) findAddr(name string) (string, error) {
+func (a *Atnd) findAddr(name string) (string, error) {
 	a.muConfig.RLock()
 	defer a.muConfig.RUnlock()
 
@@ -371,14 +392,16 @@ func (a *attend) findAddr(name string) (string, error) {
 }
 
 // sendPing は メンバーがいる場合に true になります。
-func (*attend) sendPing(ctx context.Context, addr string) (bool, error) {
+func (*Atnd) sendPing(ctx context.Context, addr string) (bool, error) {
 	stdout := new(bytes.Buffer)
 	cmd := exec.CommandContext(ctx, "l2ping", "-c", "1", addr)
 	cmd.Stdout = stdout
 
 	if err := cmd.Run(); err != nil {
-		if strings.Contains(stdout.String(), "No route to host") {
-			return false, errBluetoothNotAvailable
+		if errors.Is(err, exec.ErrNotFound) {
+			return false, ErrL2pingNotFound
+		} else if strings.Contains(stdout.String(), "No route to host") {
+			return false, ErrBluetoothNotAvailable
 		}
 
 		return false, nil
@@ -388,11 +411,25 @@ func (*attend) sendPing(ctx context.Context, addr string) (bool, error) {
 }
 
 // updateStatus は name の在室時間を ts に更新します。
-func (a *attend) updateStatus(name string, ts *time.Time) {
+func (a *Atnd) updateStatus(name string, ts *time.Time) {
 	a.muStatus.Lock()
 	defer a.muStatus.Unlock()
 
 	a.status[name] = ts
+}
+
+// Members は登録されているメンバーの名前のリストを返します。
+func (a *Atnd) Members() []string {
+	res := []string{}
+
+	a.muConfig.RLock()
+	defer a.muConfig.RUnlock()
+
+	for _, mem := range a.config.Members {
+		res = append(res, mem.Name)
+	}
+
+	return res
 }
 
 // config は設定ファイルの構造体です。

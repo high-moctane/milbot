@@ -1,3 +1,5 @@
 /milbot
 /milbot.exe
+/milbot-linux
 /.env
+/atnd_config.json
