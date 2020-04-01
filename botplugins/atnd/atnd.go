@@ -31,7 +31,7 @@ func New() *Plugin {
 // Start でプラグインを有効化します。
 func (p *Plugin) Start(client *slack.Client) error {
 	p.client = client
-	p.atnd = libatnd.New()
+	p.atnd = libatnd.Instance()
 	return nil
 }
 
@@ -39,6 +39,10 @@ func (p *Plugin) Start(client *slack.Client) error {
 func (p *Plugin) Serve(ctx context.Context, event slack.RTMEvent) error {
 	ev, ok := event.Data.(*slack.MessageEvent)
 	if !ok {
+		return nil
+	}
+
+	if ev.BotID != "" {
 		return nil
 	}
 

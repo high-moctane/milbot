@@ -55,6 +55,9 @@ func (p *HelpPlugin) isValidEvent(event slack.RTMEvent) bool {
 	if !ok {
 		return false
 	}
+	if ev.BotID != "" {
+		return false
+	}
 	return p.validRegexp.MatchString(ev.Text)
 }
 

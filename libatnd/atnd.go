@@ -18,10 +18,10 @@ import (
 )
 
 // configFileName はメンバーのアドレスを保管しておくファイルの名前です。
-const configFileName = "atnd_config.json"
+const configFileName = ".atnd_config.json"
 
 // configPerm は config ファイルのパーミッションです。
-const configPerm = 0666
+const configPerm = 0600
 
 // atnd は Atnd のシングルトンです。
 var atnd *Atnd
@@ -111,8 +111,8 @@ type Atnd struct {
 	semaSearchMember chan struct{}
 }
 
-// New はシングルトンの Atnd を返します。
-func New() *Atnd {
+// Instance はシングルトンの Atnd を返します。
+func Instance() *Atnd {
 	return atnd
 }
 
