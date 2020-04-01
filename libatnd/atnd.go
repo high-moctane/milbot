@@ -3,6 +3,9 @@ package libatnd
 import (
 	"bytes"
 	"context"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -18,10 +21,16 @@ import (
 )
 
 // configFileName はメンバーのアドレスを保管しておくファイルの名前です。
-const configFileName = ".atnd_config.json"
+const configFileName = "atnd_config.json"
 
 // configPerm は config ファイルのパーミッションです。
 const configPerm = 0600
+
+// keyFileName は Bluetooth アドレスを暗号化するためのキーのファイルです。
+const encKeyFileName = ".atnd_key"
+
+// encKeyPerm は暗号化キーファイルのパーミッションです。
+const encKeyPerm = 0600
 
 // atnd は Atnd のシングルトンです。
 var atnd *Atnd
@@ -101,6 +110,9 @@ type Atnd struct {
 	muConfig *sync.RWMutex
 	config   *config
 
+	// Bluetooth アドレスを暗号化するキーです。
+	encKey []byte
+
 	// メンバーの名前と最後に観測した時間との対応。
 	// Bot の起動から観測してない場合は nil が入る。
 	muStatus *sync.RWMutex
@@ -125,8 +137,11 @@ func newAtnd() (*Atnd, error) {
 	if err != nil {
 		return nil, fmt.Errorf("create new Atnd failed: %w", err)
 	}
-
 	if err := a.initConfig(); err != nil {
+		return nil, fmt.Errorf("create new Atnd failed: %w", err)
+	}
+
+	if err := a.initEncKey(); err != nil {
 		return nil, fmt.Errorf("create new Atnd failed: %w", err)
 	}
 
@@ -208,18 +223,138 @@ func (a *Atnd) dumpConfig() error {
 }
 
 // configPath は設定ファイルの場所を返します。
-func (*Atnd) configPath() (string, error) {
-	executable, err := os.Executable()
+func (a *Atnd) configPath() (string, error) {
+	realExec, err := a.realExecPath()
 	if err != nil {
 		return "", fmt.Errorf("cannot get config path: %w", err)
+	}
+	return filepath.Join(filepath.Dir(realExec), configFileName), nil
+}
+
+// realExecDir は実行ファイルの実体のパスを返します。
+func (*Atnd) realExecPath() (string, error) {
+	executable, err := os.Executable()
+	if err != nil {
+		return "", fmt.Errorf("cannot get real executable path: %w", err)
 	}
 
 	realExec, err := filepath.EvalSymlinks(executable)
 	if err != nil {
-		return "", fmt.Errorf("cannot get config path: %w", err)
+		return "", fmt.Errorf("cannot get real executable path: %w", err)
 	}
 
-	return filepath.Join(filepath.Dir(realExec), configFileName), nil
+	return realExec, nil
+}
+
+// generateNewKey は新しい暗号化キーを生成します。
+func (*Atnd) generateNewKey() ([]byte, error) {
+	key := make([]byte, 32)
+	if _, err := rand.Read(key); err != nil {
+		return nil, fmt.Errorf("generate new key failed: %w", err)
+	}
+	return key, nil
+}
+
+// encKeyPath は暗号化のキーファイルのパスを変えします。
+func (a *Atnd) encKeyPath() (string, error) {
+	realExec, err := a.realExecPath()
+	if err != nil {
+		return "", fmt.Errorf("cannot get enc key path: %w", err)
+	}
+	return filepath.Join(filepath.Dir(realExec), encKeyFileName), nil
+}
+
+// initEncEey は必要に応じてキーファイルを生成して encKey を初期化します。
+func (a *Atnd) initEncKey() error {
+	// キーファイルがなければ生成
+	encPath, err := a.encKeyPath()
+	if err != nil {
+		return fmt.Errorf("init enc key failed: %w", err)
+	}
+
+	_, err = os.Stat(encPath)
+	if os.IsNotExist(err) {
+		if err := a.createEncKeyFile(encPath); err != nil {
+			return fmt.Errorf("init enc key failed: %w", err)
+		}
+	} else if err != nil {
+		return fmt.Errorf("init enc key failed: %w", err)
+	}
+
+	key, err := a.loadEncKeyFile(encPath)
+	if err != nil {
+		return fmt.Errorf("init enc key failed: %w", err)
+	}
+
+	a.encKey = key
+	return nil
+}
+
+// createEncKeyFile は暗号化キーファイルを生成します。
+func (a *Atnd) createEncKeyFile(encPath string) error {
+	key, err := a.generateNewKey()
+	if err != nil {
+		return fmt.Errorf("create enc key file failed: %w", err)
+	}
+
+	if err := ioutil.WriteFile(encPath, key, encKeyPerm); err != nil {
+		return fmt.Errorf("create enc key failed: %w", err)
+	}
+
+	return nil
+}
+
+// loadEncKeyFile はファイルから暗号化キーをロードします。
+func (a *Atnd) loadEncKeyFile(encPath string) ([]byte, error) {
+	key, err := ioutil.ReadFile(encPath)
+	if err != nil {
+		return nil, fmt.Errorf("load enc key failed: %w", err)
+	}
+	return key, nil
+}
+
+// encode は bytes をエンコードします。
+func (a *Atnd) encode(plain string) ([]byte, error) {
+	block, err := aes.NewCipher(a.encKey)
+	if err != nil {
+		return nil, fmt.Errorf("encode error: %w", err)
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, fmt.Errorf("encode error: %w", err)
+	}
+
+	nonce := make([]byte, gcm.NonceSize())
+	_, err = rand.Read(nonce)
+	if err != nil {
+		return nil, fmt.Errorf("encode error: %w", err)
+	}
+
+	encoded := gcm.Seal(nil, nonce, []byte(plain), nil)
+	encoded = append(nonce, encoded...)
+	return encoded, nil
+}
+
+// decode は encoded をデコードします。
+func (a *Atnd) decode(encoded []byte) (string, error) {
+	block, err := aes.NewCipher(a.encKey)
+	if err != nil {
+		return "", fmt.Errorf("decode error: %w", err)
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", fmt.Errorf("decode error: %w", err)
+	}
+
+	nonce := encoded[:gcm.NonceSize()]
+	plain, err := gcm.Open(nil, nonce, encoded[gcm.NonceSize():], nil)
+	if err != nil {
+		return "", fmt.Errorf("decode error: %w", err)
+	}
+
+	return string(plain), nil
 }
 
 // initStatus は a.config から a.status を初期化します。
@@ -260,6 +395,11 @@ func (a *Atnd) SetMember(name, addr string) error {
 		return InvalidMACAddressError{Address: addr}
 	}
 
+	encodedAddr, err := a.encode(addr)
+	if err != nil {
+		return fmt.Errorf("set member error: %w", err)
+	}
+
 	a.muConfig.Lock()
 	defer a.muConfig.Unlock()
 
@@ -272,9 +412,9 @@ func (a *Atnd) SetMember(name, addr string) error {
 	}
 
 	if found {
-		a.updateMember(name, addr)
+		a.updateMember(name, encodedAddr)
 	} else {
-		a.addMember(name, addr)
+		a.addMember(name, encodedAddr)
 	}
 
 	if err := a.dumpConfig(); err != nil {
@@ -285,16 +425,16 @@ func (a *Atnd) SetMember(name, addr string) error {
 }
 
 // addMember はメンバー情報を追加します。
-func (a *Atnd) addMember(name, addr string) {
-	newMember := member{Name: name, Address: addr}
+func (a *Atnd) addMember(name string, encodedAddr []byte) {
+	newMember := member{Name: name, EncodedAddress: encodedAddr}
 	a.config.Members = append(a.config.Members, &newMember)
 }
 
 // updateMember は name の addr を変更します。
-func (a *Atnd) updateMember(name, addr string) {
+func (a *Atnd) updateMember(name string, encodedAddr []byte) {
 	for i := range a.config.Members {
 		if a.config.Members[i].Name == name {
-			a.config.Members[i].Address = addr
+			a.config.Members[i].EncodedAddress = encodedAddr
 			return
 		}
 	}
@@ -350,7 +490,11 @@ func (a *Atnd) Search() ([]*Attendance, error) {
 
 // SearchMemberContext はひとりのメンバーをサーチします。いなかったら nil です。
 func (a *Atnd) SearchMemberContext(ctx context.Context, name string) (*Attendance, error) {
-	addr, err := a.findAddr(name)
+	encodedAddr, err := a.findAddr(name)
+	if err != nil {
+		return nil, fmt.Errorf("search member failed: %w", err)
+	}
+	addr, err := a.decode(encodedAddr)
 	if err != nil {
 		return nil, fmt.Errorf("search member failed: %w", err)
 	}
@@ -377,18 +521,18 @@ func (a *Atnd) SearchMemberContext(ctx context.Context, name string) (*Attendanc
 	return nil, nil
 }
 
-// findAddr は name に対応する address を返します。
-func (a *Atnd) findAddr(name string) (string, error) {
+// findAddr は name に対応する暗号化された address を返します。
+func (a *Atnd) findAddr(name string) ([]byte, error) {
 	a.muConfig.RLock()
 	defer a.muConfig.RUnlock()
 
 	for _, mem := range a.config.Members {
 		if mem.Name == name {
-			return mem.Address, nil
+			return mem.EncodedAddress, nil
 		}
 	}
 
-	return "", MemberNotExistError{Name: name}
+	return nil, MemberNotExistError{Name: name}
 }
 
 // sendPing は メンバーがいる場合に true になります。
@@ -446,8 +590,8 @@ func newConfig() *config {
 
 // member は設定ファイルのメンバーを表します。
 type member struct {
-	Name    string `json:"name"`    // 表示名です。
-	Address string `json:"address"` // Bluetooth アドレスです。
+	Name           string `json:"name"`            // 表示名です。
+	EncodedAddress []byte `json:"encoded_address"` // 暗号化された Bluetooth アドレスです。
 }
 
 // Attendance はそのメンバーの最後に出席した時間を表します。

@@ -3,3 +3,4 @@
 /milbot-linux
 /.env
 /atnd_config.json
+/.atnd_key
