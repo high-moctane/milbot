@@ -2,9 +2,10 @@ package main
 
 import (
 	"context"
-	"errors"
 	"log"
-	"time"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/high-moctane/milbot/botlog"
 	"github.com/high-moctane/milbot/botplugin"
@@ -12,11 +13,7 @@ import (
 	"github.com/high-moctane/milbot/botplugins/exit"
 	"github.com/high-moctane/milbot/botplugins/ping"
 	_ "github.com/joho/godotenv/autoload"
-	"github.com/slack-go/slack"
 )
-
-// pluginTimeout はプラグインが返事をするののタイムアウト時間です。
-var pluginTimeout = 120 * time.Second
 
 // plugins にプラグインを入れていくぞ(｀･ω･´)！
 var plugins = []botplugin.Plugin{
@@ -36,64 +33,32 @@ func main() {
 // プログラムを終えます。
 func run() error {
 	// ログ
-	log.Print("milbot launch(｀･ω･´)！")
-	defer log.Print("milbot exited(｀･ω･´)")
+	log.Print("milbot launch (｀･ω･´)！")
+	botlog.Send("milbot launch (｀･ω･´)")
+	defer log.Print("milbot terminated (｀･ω･´)")
+	defer botlog.Send("milbot terminated (｀･ω･´)")
 
-	// Slack の準備
-	client, err := newSlackClient()
-	if err != nil {
-		return err
-	}
-	rtm := client.NewRTM()
-	go rtm.ManageConnection()
-	defer rtm.Disconnect()
-
-	// プラグインの起動
-	for _, plg := range plugins {
-		if err := plg.Start(client); err != nil {
-			botlog.Send(err)
-			log.Print(err)
-			return err
-		}
-		defer func(plg botplugin.Plugin) {
-			if err := plg.Stop(); err != nil {
-				botlog.Send(err)
-				log.Print(err)
-			}
-		}(plg)
-	}
-	helpPlugin := NewHelpPlugin(plugins)
-
-	// 受け取ったイベントを処理する
+	// Bot の起動
 	ctx := context.Background()
-	for event := range rtm.IncomingEvents {
-		if err := detectUncontinuableRTMEvent(&event); err != nil {
-			return err
-		}
+	errCh := make(chan error)
+	bot := NewBot(plugins)
+	go func() { errCh <- bot.Serve(ctx) }()
+	defer bot.Stop()
 
-		for _, plg := range append(plugins, helpPlugin) {
-			go sendEventToPlugin(ctx, plg, event)
-		}
-	}
-
-	return nil
-}
-
-// sendEventToPlugin は plugin に event を渡します。
-func sendEventToPlugin(ctx context.Context, plg botplugin.Plugin, event slack.RTMEvent) {
-	newCtx, cancel := context.WithTimeout(ctx, pluginTimeout)
-	defer cancel()
-	if err := plg.Serve(newCtx, event); err != nil {
-		log.Print(err)
-	}
-}
-
-// detectErrorEvent Bot を終了すべき RTMEvent を見つけます。
-func detectUncontinuableRTMEvent(event *slack.RTMEvent) error {
-	// TODO いろんなエラーに対応したい
-	if _, ok := event.Data.(*slack.InvalidAuthEvent); ok {
-		err := errors.New("invalid auth")
+	// シグナルハンドリングや Bot のエラーによる終了処理
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+	select {
+	case err := <-errCh:
 		return err
+	case sig := <-sigCh:
+		switch sig {
+		case syscall.SIGINT:
+			botlog.Send("receive SIGINT")
+		case syscall.SIGTERM:
+			botlog.Send("received SITGERM")
+		}
 	}
+
 	return nil
 }
