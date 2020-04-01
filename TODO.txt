@@ -2,8 +2,6 @@ sigint の捕捉
 
 エラーメッセージの改良
 
-Serve に client 渡さなくて良くない？ Start で渡したら？
-
 libatnd はドキュメントをきれいにする。
 
 定期的にサーチするようにする。（5分くらい？）
@@ -21,3 +19,9 @@ member search members をコピーしちゃったほうが mutex 的にうれし
 Makefile の準備
 
 .atnd_config.json
+
+自分のには返事をしない処理をする
+
+atnd のシングルトンを sync.Once に書き換え
+
+#owata に投げると自分のチャンネルに通知が飛ぶやつ

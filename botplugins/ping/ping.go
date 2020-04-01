@@ -11,7 +11,9 @@ import (
 var validRegexp = regexp.MustCompile(`(?i)^mil ping`)
 
 // Plugin は ping に pong するプラグインです。
-type Plugin struct{}
+type Plugin struct {
+	client *slack.Client
+}
 
 // New でプラグインを生成します。
 func New() *Plugin {
@@ -19,18 +21,19 @@ func New() *Plugin {
 }
 
 // Start でプラグインを有効化します。
-func (p *Plugin) Start() error {
+func (p *Plugin) Start(client *slack.Client) error {
+	p.client = client
 	return nil
 }
 
 // Serve で ping に対して pong を返します。
-func (p *Plugin) Serve(ctx context.Context, client *slack.Client, event slack.RTMEvent) error {
+func (p *Plugin) Serve(ctx context.Context, event slack.RTMEvent) error {
 	if !p.isValidEvent(event) {
 		return nil
 	}
 
 	ev := event.Data.(*slack.MessageEvent)
-	_, _, _, err := client.SendMessageContext(
+	_, _, _, err := p.client.SendMessageContext(
 		ctx,
 		ev.Channel,
 		slack.MsgOptionText("pong(｀･ω･´)", true),
@@ -47,14 +50,14 @@ func (*Plugin) isValidEvent(event slack.RTMEvent) bool {
 	return validRegexp.MatchString(ev.Text)
 }
 
+// Stop でプラグインの終了処理をします。
+func (p *Plugin) Stop() error {
+	return nil
+}
+
 // Help でヘルプメッセージを返します。
 func (p *Plugin) Help() string {
 	return "[Ping]\n" +
 		"`milbot ping` に pong を返します。\n" +
 		"Bot の生存確認に使ってください(｀･ω･´)"
-}
-
-// Stop でプラグインの終了処理をします。
-func (p *Plugin) Stop() error {
-	return nil
 }

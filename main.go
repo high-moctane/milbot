@@ -39,9 +39,18 @@ func run() error {
 	log.Print("milbot launch(｀･ω･´)！")
 	defer log.Print("milbot exited(｀･ω･´)")
 
+	// Slack の準備
+	client, err := newSlackClient()
+	if err != nil {
+		return err
+	}
+	rtm := client.NewRTM()
+	go rtm.ManageConnection()
+	defer rtm.Disconnect()
+
 	// プラグインの起動
 	for _, plg := range plugins {
-		if err := plg.Start(); err != nil {
+		if err := plg.Start(client); err != nil {
 			botlog.Send(err)
 			log.Print(err)
 			return err
@@ -55,15 +64,6 @@ func run() error {
 	}
 	helpPlugin := NewHelpPlugin(plugins)
 
-	// Slack の準備
-	client, err := newSlackClient()
-	if err != nil {
-		return err
-	}
-	rtm := client.NewRTM()
-	go rtm.ManageConnection()
-	defer rtm.Disconnect()
-
 	// 受け取ったイベントを処理する
 	ctx := context.Background()
 	for event := range rtm.IncomingEvents {
@@ -72,7 +72,7 @@ func run() error {
 		}
 
 		for _, plg := range append(plugins, helpPlugin) {
-			go sendEventToPlugin(ctx, plg, client, event)
+			go sendEventToPlugin(ctx, plg, event)
 		}
 	}
 
@@ -80,10 +80,10 @@ func run() error {
 }
 
 // sendEventToPlugin は plugin に event を渡します。
-func sendEventToPlugin(ctx context.Context, plg botplugin.Plugin, client *slack.Client, event slack.RTMEvent) {
+func sendEventToPlugin(ctx context.Context, plg botplugin.Plugin, event slack.RTMEvent) {
 	newCtx, cancel := context.WithTimeout(ctx, pluginTimeout)
 	defer cancel()
-	if err := plg.Serve(newCtx, client, event); err != nil {
+	if err := plg.Serve(newCtx, event); err != nil {
 		log.Print(err)
 	}
 }

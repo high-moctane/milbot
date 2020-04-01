@@ -11,6 +11,7 @@ import (
 
 // HelpPlugin はヘルプメッセージを返すプラグインです
 type HelpPlugin struct {
+	client      *slack.Client
 	plugins     []botplugin.Plugin
 	validRegexp *regexp.Regexp
 }
@@ -24,18 +25,19 @@ func NewHelpPlugin(plugins []botplugin.Plugin) *HelpPlugin {
 }
 
 // Start でプラグインを有効化します。
-func (p *HelpPlugin) Start() error {
+func (p *HelpPlugin) Start(client *slack.Client) error {
+	p.client = client
 	return nil
 }
 
 // Serve でヘルプメッセージを返します。
-func (p *HelpPlugin) Serve(ctx context.Context, client *slack.Client, event slack.RTMEvent) error {
+func (p *HelpPlugin) Serve(ctx context.Context, event slack.RTMEvent) error {
 	if !p.isValidEvent(event) {
 		return nil
 	}
 
 	ev := event.Data.(*slack.MessageEvent)
-	_, _, _, err := client.SendMessageContext(
+	_, _, _, err := p.client.SendMessageContext(
 		ctx,
 		ev.Channel,
 		slack.MsgOptionText(p.buildHelpMessage(), true),
@@ -55,19 +57,19 @@ func (p *HelpPlugin) isValidEvent(event slack.RTMEvent) bool {
 // buildHelpMessage は plugins からヘルプメッセージを生成します。
 func (p *HelpPlugin) buildHelpMessage() string {
 	helps := []string{}
-	for _, plg := range p.plugins {
+	for _, plg := range append(p.plugins, p) {
 		helps = append(helps, plg.Help())
 	}
 	return strings.Join(helps, "\n\n")
 }
 
-// Help でヘルプメッセージを返します。
-func (p *HelpPlugin) Help() string {
-	return "## Help\n" +
-		"`milbot help` でこのメッセージを表示します。"
-}
-
 // Stop でプラグインの終了処理をします。
 func (p *HelpPlugin) Stop() error {
 	return nil
+}
+
+// Help でヘルプメッセージを返します。
+func (p *HelpPlugin) Help() string {
+	return "[Help]\n" +
+		"`milbot help` でこのメッセージを表示します。"
 }

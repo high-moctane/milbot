@@ -19,7 +19,8 @@ var regexpAtnd = regexp.MustCompile(`(?i)milbot atnd`)
 
 // Plugin は 在室状況を確認するプラグインです。
 type Plugin struct {
-	atnd *libatnd.Atnd
+	client *slack.Client
+	atnd   *libatnd.Atnd
 }
 
 // New でプラグインを生成します。
@@ -28,32 +29,33 @@ func New() *Plugin {
 }
 
 // Start でプラグインを有効化します。
-func (p *Plugin) Start() error {
+func (p *Plugin) Start(client *slack.Client) error {
+	p.client = client
 	p.atnd = libatnd.New()
 	return nil
 }
 
 // Serve で atnd に反応してメッセージを返します。
-func (p *Plugin) Serve(ctx context.Context, client *slack.Client, event slack.RTMEvent) error {
+func (p *Plugin) Serve(ctx context.Context, event slack.RTMEvent) error {
 	ev, ok := event.Data.(*slack.MessageEvent)
 	if !ok {
 		return nil
 	}
 
 	if p.isAtndSetQuery(ev) {
-		if err := p.serveAtndSet(ctx, client, ev); err != nil {
+		if err := p.serveAtndSet(ctx, ev); err != nil {
 			return fmt.Errorf("atnd serve error: %w", err)
 		}
 	} else if p.isAtndDeleteQuery(ev) {
-		if err := p.serveAtndDelete(ctx, client, ev); err != nil {
+		if err := p.serveAtndDelete(ctx, ev); err != nil {
 			return fmt.Errorf("atnd serve error: %w", err)
 		}
 	} else if p.isAtndListQuery(ev) {
-		if err := p.serveAtndList(ctx, client, ev); err != nil {
+		if err := p.serveAtndList(ctx, ev); err != nil {
 			return fmt.Errorf("atnd serve error: %w", err)
 		}
 	} else if p.isAtndQuery(ev) {
-		if err := p.serveAtnd(ctx, client, ev); err != nil {
+		if err := p.serveAtnd(ctx, ev); err != nil {
 			return fmt.Errorf("atnd serve error: %w", err)
 		}
 	}
@@ -65,10 +67,10 @@ func (*Plugin) isAtndSetQuery(ev *slack.MessageEvent) bool {
 	return regexpAtndSet.MatchString(ev.Text)
 }
 
-func (p *Plugin) serveAtndSet(ctx context.Context, client *slack.Client, event *slack.MessageEvent) error {
+func (p *Plugin) serveAtndSet(ctx context.Context, event *slack.MessageEvent) error {
 	elems := strings.Split(event.Text, " ")
 	if len(elems) != 5 {
-		_, _, _, err := client.SendMessageContext(
+		_, _, _, err := p.client.SendMessageContext(
 			ctx,
 			event.Channel,
 			slack.MsgOptionText("フォーマットが違います。`milbot help` をご覧ください (´･ω･｀)", true),
@@ -84,7 +86,7 @@ func (p *Plugin) serveAtndSet(ctx context.Context, client *slack.Client, event *
 	var macErr libatnd.InvalidMACAddressError
 	var nameErr libatnd.InvalidNameError
 	if errors.As(err, &macErr) {
-		_, _, _, err := client.SendMessageContext(
+		_, _, _, err := p.client.SendMessageContext(
 			ctx,
 			event.Channel,
 			slack.MsgOptionText("変な Bluetooth アドレスです (´･ω･｀)", true),
@@ -94,7 +96,7 @@ func (p *Plugin) serveAtndSet(ctx context.Context, client *slack.Client, event *
 		}
 		return nil
 	} else if errors.As(err, &nameErr) {
-		_, _, _, err := client.SendMessageContext(
+		_, _, _, err := p.client.SendMessageContext(
 			ctx,
 			event.Channel,
 			slack.MsgOptionText("その名前は使えません (´･ω･｀)", true),
@@ -107,7 +109,7 @@ func (p *Plugin) serveAtndSet(ctx context.Context, client *slack.Client, event *
 		return fmt.Errorf("serve atnd set error: %w", err)
 	}
 
-	_, _, _, err = client.SendMessageContext(
+	_, _, _, err = p.client.SendMessageContext(
 		ctx,
 		event.Channel,
 		slack.MsgOptionText("登録しました (｀･ω･´)", true),
@@ -123,10 +125,10 @@ func (p *Plugin) isAtndDeleteQuery(ev *slack.MessageEvent) bool {
 	return regexpAtndDelete.MatchString(ev.Text)
 }
 
-func (p *Plugin) serveAtndDelete(ctx context.Context, client *slack.Client, event *slack.MessageEvent) error {
+func (p *Plugin) serveAtndDelete(ctx context.Context, event *slack.MessageEvent) error {
 	elems := strings.Split(event.Text, " ")
 	if len(elems) != 4 {
-		_, _, _, err := client.SendMessageContext(
+		_, _, _, err := p.client.SendMessageContext(
 			ctx,
 			event.Channel,
 			slack.MsgOptionText("フォーマットが違います。`milbot help` をご覧ください (´･ω･｀)", true),
@@ -141,7 +143,7 @@ func (p *Plugin) serveAtndDelete(ctx context.Context, client *slack.Client, even
 	err := p.atnd.DeleteMember(name)
 	var notExistErr libatnd.MemberNotExistError
 	if errors.As(err, &notExistErr) {
-		_, _, _, err := client.SendMessageContext(
+		_, _, _, err := p.client.SendMessageContext(
 			ctx,
 			event.Channel,
 			slack.MsgOptionText("その名前のメンバーはいません (´･ω･｀)", true),
@@ -154,7 +156,7 @@ func (p *Plugin) serveAtndDelete(ctx context.Context, client *slack.Client, even
 		return fmt.Errorf("serve atnd delete error: %w", err)
 	}
 
-	_, _, _, err = client.SendMessageContext(
+	_, _, _, err = p.client.SendMessageContext(
 		ctx,
 		event.Channel,
 		slack.MsgOptionText("削除しました (｀･ω･´)", true),
@@ -170,7 +172,7 @@ func (p *Plugin) isAtndListQuery(ev *slack.MessageEvent) bool {
 	return regexpAtndList.MatchString(ev.Text)
 }
 
-func (p *Plugin) serveAtndList(ctx context.Context, client *slack.Client, event *slack.MessageEvent) error {
+func (p *Plugin) serveAtndList(ctx context.Context, event *slack.MessageEvent) error {
 	list := p.atnd.Members()
 
 	msg := new(strings.Builder)
@@ -184,7 +186,7 @@ func (p *Plugin) serveAtndList(ctx context.Context, client *slack.Client, event 
 
 	msg.WriteString("が登録されています (｀･ω･´)")
 
-	_, _, _, err := client.SendMessageContext(
+	_, _, _, err := p.client.SendMessageContext(
 		ctx,
 		event.Channel,
 		slack.MsgOptionText(msg.String(), true),
@@ -200,10 +202,10 @@ func (p *Plugin) isAtndQuery(ev *slack.MessageEvent) bool {
 	return regexpAtnd.MatchString(ev.Text)
 }
 
-func (p *Plugin) serveAtnd(ctx context.Context, client *slack.Client, event *slack.MessageEvent) error {
+func (p *Plugin) serveAtnd(ctx context.Context, event *slack.MessageEvent) error {
 	attendances, err := p.atnd.SearchContext(ctx)
 	if errors.Is(err, libatnd.ErrBluetoothNotAvailable) {
-		_, _, _, err := client.SendMessageContext(
+		_, _, _, err := p.client.SendMessageContext(
 			ctx,
 			event.Channel,
 			slack.MsgOptionText("Bluetooth が死んでます (´; ω ;｀)", true),
@@ -224,7 +226,7 @@ func (p *Plugin) serveAtnd(ctx context.Context, client *slack.Client, event *sla
 	}
 	msg.WriteString("がいます (｀･ω･´)")
 
-	_, _, _, err = client.SendMessageContext(
+	_, _, _, err = p.client.SendMessageContext(
 		ctx,
 		event.Channel,
 		slack.MsgOptionText(msg.String(), true),
@@ -233,6 +235,11 @@ func (p *Plugin) serveAtnd(ctx context.Context, client *slack.Client, event *sla
 		return fmt.Errorf("serve atnd error: %w", err)
 	}
 
+	return nil
+}
+
+// Stop でプラグインの終了処理をします。
+func (p *Plugin) Stop() error {
 	return nil
 }
 
@@ -256,9 +263,4 @@ func (p *Plugin) Help() string {
 		"例: `milbot atnd delete 俺様`" +
 		"`milbot atnd list`\n" +
 		"登録されているメンバーの名前を表示します。"
-}
-
-// Stop でプラグインの終了処理をします。
-func (p *Plugin) Stop() error {
-	return nil
 }

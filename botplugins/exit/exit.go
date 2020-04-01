@@ -15,7 +15,9 @@ import (
 var validRegexp = regexp.MustCompile(`(?i)^mil exit`)
 
 // Plugin は終了コマンドを受け付けるプラグインです
-type Plugin struct{}
+type Plugin struct {
+	client *slack.Client
+}
 
 // New でプラグインを生成します。
 func New() *Plugin {
@@ -23,12 +25,13 @@ func New() *Plugin {
 }
 
 // Start でプラグインを有効化します。
-func (p *Plugin) Start() error {
+func (p *Plugin) Start(client *slack.Client) error {
+	p.client = client
 	return nil
 }
 
 // Serve で終了コマンドを受け付けて終了します。
-func (p *Plugin) Serve(ctx context.Context, client *slack.Client, event slack.RTMEvent) error {
+func (p *Plugin) Serve(ctx context.Context, event slack.RTMEvent) error {
 	if !p.isValidEvent(event) {
 		return nil
 	}
@@ -36,12 +39,12 @@ func (p *Plugin) Serve(ctx context.Context, client *slack.Client, event slack.RT
 	defer os.Exit(0)
 
 	ev, _ := event.Data.(*slack.MessageEvent)
-	user, err := p.getUserNameContext(ctx, client, ev)
+	user, err := p.getUserNameContext(ctx, ev)
 	if err != nil {
 		return err
 	}
 
-	_, _, _, err = client.SendMessageContext(
+	_, _, _, err = p.client.SendMessageContext(
 		ctx,
 		ev.Channel,
 		slack.MsgOptionText("Bye (｀･ω･´)", true),
@@ -55,8 +58,8 @@ func (p *Plugin) Serve(ctx context.Context, client *slack.Client, event slack.RT
 }
 
 // getUserName は event の送り主の名前を取得します。
-func (*Plugin) getUserNameContext(ctx context.Context, client *slack.Client, event *slack.MessageEvent) (name string, err error) {
-	user, err := client.GetUserInfoContext(ctx, event.User)
+func (p *Plugin) getUserNameContext(ctx context.Context, event *slack.MessageEvent) (name string, err error) {
+	user, err := p.client.GetUserInfoContext(ctx, event.User)
 	if err != nil {
 		err = fmt.Errorf("could not get user: %w", err)
 		return
@@ -74,13 +77,13 @@ func (*Plugin) isValidEvent(event slack.RTMEvent) bool {
 	return validRegexp.MatchString(ev.Text)
 }
 
+// Stop でプラグインの終了処理をします。
+func (p *Plugin) Stop() error {
+	return nil
+}
+
 // Help でヘルプメッセージを返します。
 func (p *Plugin) Help() string {
 	return "[Exit]\n" +
 		"`milbot exit` を受け取って bot を終了します。"
-}
-
-// Stop でプラグインの終了処理をします。
-func (p *Plugin) Stop() error {
-	return nil
 }
