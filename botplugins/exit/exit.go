@@ -12,7 +12,7 @@ import (
 )
 
 // validPrefix は反応するメッセージの正規表現です。
-var validRegexp = regexp.MustCompile(`(?i)^mil exit`)
+var validRegexp = regexp.MustCompile(`(?i)^milbot exit`)
 
 // Plugin は終了コマンドを受け付けるプラグインです
 type Plugin struct {

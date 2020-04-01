@@ -21,7 +21,7 @@ type HelpPlugin struct {
 func NewHelpPlugin(plugins []botplugin.Plugin) *HelpPlugin {
 	return &HelpPlugin{
 		plugins:     plugins,
-		validRegexp: regexp.MustCompile(`(?i)^mil help`),
+		validRegexp: regexp.MustCompile(`(?i)^milbot help`),
 	}
 }
 

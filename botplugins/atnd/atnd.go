@@ -12,10 +12,10 @@ import (
 )
 
 // 反応する regexp たちです。
-var regexpAtndSet = regexp.MustCompile(`(?i)milbot atnd set`)
-var regexpAtndDelete = regexp.MustCompile(`(?i)milbot atnd delete`)
-var regexpAtndList = regexp.MustCompile(`(?i)milbot atnd list`)
-var regexpAtnd = regexp.MustCompile(`(?i)milbot atnd`)
+var regexpAtndSet = regexp.MustCompile(`(?i)^milbot atnd set`)
+var regexpAtndDelete = regexp.MustCompile(`(?i)^milbot atnd delete`)
+var regexpAtndList = regexp.MustCompile(`(?i)^milbot atnd list`)
+var regexpAtnd = regexp.MustCompile(`(?i)^milbot atnd`)
 
 // Plugin は 在室状況を確認するプラグインです。
 type Plugin struct {

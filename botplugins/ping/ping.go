@@ -9,7 +9,7 @@ import (
 )
 
 // validPrefix は反応するメッセージの正規表現です。
-var validRegexp = regexp.MustCompile(`(?i)^mil ping`)
+var validRegexp = regexp.MustCompile(`(?i)^milbot ping`)
 
 // Plugin は ping に pong するプラグインです。
 type Plugin struct {
