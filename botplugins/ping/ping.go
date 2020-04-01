@@ -2,6 +2,7 @@ package ping
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 
 	"github.com/slack-go/slack"
@@ -38,7 +39,10 @@ func (p *Plugin) Serve(ctx context.Context, event slack.RTMEvent) error {
 		ev.Channel,
 		slack.MsgOptionText("pong(｀･ω･´)", true),
 	)
-	return err
+	if err != nil {
+		return fmt.Errorf("ping failed: %w", err)
+	}
+	return nil
 }
 
 // isValidEvent は event に反応するべきかどうか返します。

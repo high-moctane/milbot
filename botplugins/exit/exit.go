@@ -41,7 +41,7 @@ func (p *Plugin) Serve(ctx context.Context, event slack.RTMEvent) error {
 	ev, _ := event.Data.(*slack.MessageEvent)
 	user, err := p.getUserNameContext(ctx, ev)
 	if err != nil {
-		return err
+		return fmt.Errorf("exit failed: %w", err)
 	}
 
 	_, _, _, err = p.client.SendMessageContext(
@@ -50,11 +50,11 @@ func (p *Plugin) Serve(ctx context.Context, event slack.RTMEvent) error {
 		slack.MsgOptionText("Bye (｀･ω･´)", true),
 	)
 	if err != nil {
-		log.Printf("can't send bye message: %v", err)
+		return fmt.Errorf("exit failed: %v", err)
 	}
-	log.Printf("received exit message by %s", user)
-	botlog.SendfContext(ctx, "received exit message by %s", user)
-	return err
+	log.Printf("received exit command by %s", user)
+	botlog.SendfContext(ctx, "received exit command by %s", user)
+	return nil
 }
 
 // getUserName は event の送り主の名前を取得します。

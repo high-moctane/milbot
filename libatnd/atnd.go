@@ -28,7 +28,7 @@ var atnd *Atnd
 
 func init() {
 	var err error
-	atnd, err = newAttend()
+	atnd, err = newAtnd()
 	if err != nil {
 		log.Fatal("create Atnd error:", err)
 	}
@@ -117,17 +117,17 @@ func New() *Atnd {
 }
 
 // newAttend は Atnd を作って返します。
-func newAttend() (*Atnd, error) {
+func newAtnd() (*Atnd, error) {
 	a := new(Atnd)
 
 	var err error
 	a.confPath, err = a.configPath()
 	if err != nil {
-		return nil, fmt.Errorf("cannot load config path: %w", err)
+		return nil, fmt.Errorf("create new Atnd failed: %w", err)
 	}
 
 	if err := a.initConfig(); err != nil {
-		return nil, fmt.Errorf("init config error: %w", err)
+		return nil, fmt.Errorf("create new Atnd failed: %w", err)
 	}
 
 	a.initStatus()
@@ -144,15 +144,15 @@ func (a *Atnd) initConfig() error {
 	_, err := os.Stat(a.confPath)
 	if os.IsNotExist(err) {
 		if err := a.createConfigFile(); err != nil {
-			return fmt.Errorf("cannot create config file: %w", err)
+			return fmt.Errorf("cannot init config: %w", err)
 		}
 	} else if err != nil {
-		return fmt.Errorf("cannot load config stat: %w", err)
+		return fmt.Errorf("cannot init config: %w", err)
 	}
 
 	conf, err := a.loadConfigFile()
 	if err != nil {
-		return fmt.Errorf("cannot load config file: %w", err)
+		return fmt.Errorf("cannot init config: %w", err)
 	}
 
 	a.muConfig = new(sync.RWMutex)
@@ -167,11 +167,11 @@ func (a *Atnd) createConfigFile() error {
 
 	bytes, err := json.MarshalIndent(conf, "", "  ")
 	if err != nil {
-		return fmt.Errorf("cannot marshal config: %w", err)
+		return fmt.Errorf("cannot create config file: %w", err)
 	}
 
 	if err := ioutil.WriteFile(a.confPath, bytes, configPerm); err != nil {
-		return fmt.Errorf("cannot write config: %w", err)
+		return fmt.Errorf("cannot create config file: %w", err)
 	}
 
 	return nil
@@ -181,12 +181,12 @@ func (a *Atnd) createConfigFile() error {
 func (a *Atnd) loadConfigFile() (conf *config, err error) {
 	bytes, err := ioutil.ReadFile(a.confPath)
 	if err != nil {
-		err = fmt.Errorf("cannot read config file: %w", err)
+		err = fmt.Errorf("cannot load config file: %w", err)
 		return
 	}
 
 	if err = json.Unmarshal(bytes, &conf); err != nil {
-		err = fmt.Errorf("cannot unmarshal config: %w", err)
+		err = fmt.Errorf("cannot load config file: %w", err)
 		return
 	}
 
@@ -197,11 +197,11 @@ func (a *Atnd) loadConfigFile() (conf *config, err error) {
 func (a *Atnd) dumpConfig() error {
 	bytes, err := json.MarshalIndent(a.config, "", "  ")
 	if err != nil {
-		return fmt.Errorf("config marshal error: %w", err)
+		return fmt.Errorf("dump config error: %w", err)
 	}
 
 	if err := ioutil.WriteFile(a.confPath, bytes, configPerm); err != nil {
-		return fmt.Errorf("config write error: %w", err)
+		return fmt.Errorf("dump config error: %w", err)
 	}
 
 	return nil
@@ -211,12 +211,12 @@ func (a *Atnd) dumpConfig() error {
 func (*Atnd) configPath() (string, error) {
 	executable, err := os.Executable()
 	if err != nil {
-		return "", fmt.Errorf("cannot evaluate executable path: %w", err)
+		return "", fmt.Errorf("cannot get config path: %w", err)
 	}
 
 	realExec, err := filepath.EvalSymlinks(executable)
 	if err != nil {
-		return "", fmt.Errorf("cannot evaluate realExec path: %w", err)
+		return "", fmt.Errorf("cannot get config path: %w", err)
 	}
 
 	return filepath.Join(filepath.Dir(realExec), configFileName), nil
@@ -278,7 +278,7 @@ func (a *Atnd) SetMember(name, addr string) error {
 	}
 
 	if err := a.dumpConfig(); err != nil {
-		return fmt.Errorf("config dump error: %w", err)
+		return fmt.Errorf("set member error: %w", err)
 	}
 
 	return nil
@@ -332,7 +332,7 @@ func (a *Atnd) SearchContext(ctx context.Context) ([]*Attendance, error) {
 		for _, mem := range a.config.Members {
 			attendance, err := a.SearchMemberContext(ctx, mem.Name)
 			if err != nil {
-				return nil, fmt.Errorf("search member error: %w", err)
+				return nil, fmt.Errorf("search failed: %w", err)
 			}
 			if attendance != nil {
 				res = append(res, attendance)
@@ -352,7 +352,7 @@ func (a *Atnd) Search() ([]*Attendance, error) {
 func (a *Atnd) SearchMemberContext(ctx context.Context, name string) (*Attendance, error) {
 	addr, err := a.findAddr(name)
 	if err != nil {
-		return nil, fmt.Errorf("cannot find address: %w", err)
+		return nil, fmt.Errorf("search member failed: %w", err)
 	}
 
 	select {
@@ -364,7 +364,7 @@ func (a *Atnd) SearchMemberContext(ctx context.Context, name string) (*Attendanc
 
 		exist, err := a.sendPing(ctx, addr)
 		if err != nil {
-			return nil, fmt.Errorf("search member error: %w", err)
+			return nil, fmt.Errorf("search member failed: %w", err)
 		}
 
 		if exist {

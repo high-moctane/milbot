@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -42,7 +43,10 @@ func (p *HelpPlugin) Serve(ctx context.Context, event slack.RTMEvent) error {
 		ev.Channel,
 		slack.MsgOptionText(p.buildHelpMessage(), true),
 	)
-	return err
+	if err != nil {
+		return fmt.Errorf("help failed: %w", err)
+	}
+	return nil
 }
 
 // isValidEvent は event に反応するべきかどうか返します。

@@ -25,7 +25,7 @@ func Send(v ...interface{}) {
 // 使えます。
 func SendContext(ctx context.Context, v ...interface{}) {
 	if err := postMilbotLogWebhookContext(ctx, fmt.Sprint(v...)); err != nil {
-		log.Println(fmt.Errorf("can't send msg to #milbot_log: %w", err))
+		log.Printf("can't send msg to #milbot_log: %v", err)
 	}
 }
 
@@ -39,7 +39,7 @@ func Sendf(format string, v ...interface{}) {
 // 使います。context.Context が使えます。
 func SendfContext(ctx context.Context, format string, v ...interface{}) {
 	if err := postMilbotLogWebhookContext(ctx, fmt.Sprintf(format, v...)); err != nil {
-		log.Println(fmt.Errorf("can't send msg to #milbot_log: %w", err))
+		log.Printf("can't send msg to #milbot_log: %v", err)
 	}
 }
 
@@ -52,19 +52,18 @@ func postMilbotLogWebhookContext(ctx context.Context, msg string) error {
 
 	req, err := http.NewRequestWithContext(ctx, "POST", url, makeWebhookRequestBody(msg))
 	if err != nil {
-		return fmt.Errorf("can't create a request: %w", err)
+		return fmt.Errorf("post to #milbot_log failed: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("post error: %w", err)
+		return fmt.Errorf("post to #milbot_log failed: %w", err)
 	}
 	defer resp.Body.Close()
 	defer io.Copy(ioutil.Discard, resp.Body)
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("postMilbotLogWebhook failed with status %s",
-			resp.Status)
+		return fmt.Errorf("post to #milbot_log failed %s", resp.Status)
 	}
 
 	return nil
