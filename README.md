@@ -60,6 +60,15 @@ Milbot は Raspberry Pi 上で動かすことを前提としています。
 
 `tmux` を Raspbian にインストールしておくと楽です。
 
+### ネットワークを起動させてから bot を起動するようにするための操作
+
+以下のコマンドを実行します。
+
+```
+# systemctl enable systemd-networkd
+# systemctl enable systemd-networkd-wait-online
+```
+
 ### 実行ファイルのビルド
 
 以下のコマンドを使って Raspberry Pi 用の実行ファイルをビルドします。

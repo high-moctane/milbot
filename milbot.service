@@ -4,6 +4,7 @@ Documentation=https://github.com/high-moctane/milbot/README.md
 Requires=bluetooth.target
 After=syslog.target
 After=bluetooth.target
+After=network-online.target
 
 [Service]
 WorkingDirectory=/home/pi/milbot
@@ -14,3 +15,4 @@ StartLimitBurst=5
 
 [Install]
 WantedBy=multi-user.target
+WantedBy=network-online.target
