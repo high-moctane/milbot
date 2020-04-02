@@ -14,5 +14,4 @@ StartLimitInterval=600
 StartLimitBurst=5
 
 [Install]
-WantedBy=multi-user.target
 WantedBy=network-online.target
