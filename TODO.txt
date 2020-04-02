@@ -2,16 +2,8 @@ libatnd はドキュメントをきれいにする。
 
 json の最後に改行
 
-member search members をコピーしちゃったほうが mutex 的にうれしい
-
 Makefile の準備
 
 .atnd_config.json
-
-自分のには返事をしない処理をする
-
-atnd のシングルトンを sync.Once に書き換え
-
-#owata に投げると自分のチャンネルに通知が飛ぶやつ
 
 ctx をキャンセルする

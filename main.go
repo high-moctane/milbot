@@ -32,6 +32,9 @@ func main() {
 // run は実質の main 関数です。err != nil のときに 0 でない終了コードで
 // プログラムを終えます。
 func run() error {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	// ログ
 	log.Print("milbot launch (｀･ω･´)！")
 	botlog.Send("milbot launch (｀･ω･´)")
@@ -39,7 +42,6 @@ func run() error {
 	defer botlog.Send("milbot terminated (｀･ω･´)")
 
 	// Bot の起動
-	ctx := context.Background()
 	errCh := make(chan error)
 	bot := NewBot(plugins)
 	go func() { errCh <- bot.Serve(ctx) }()
