@@ -313,45 +313,45 @@ func (a *Atnd) loadEncKeyFile(encPath string) ([]byte, error) {
 	return key, nil
 }
 
-// encode は bytes をエンコードします。
-func (a *Atnd) encode(plain string) ([]byte, error) {
+// encrypt は bytes を暗号化します。
+func (a *Atnd) encrypt(plain string) ([]byte, error) {
 	block, err := aes.NewCipher(a.encKey)
 	if err != nil {
-		return nil, fmt.Errorf("encode error: %w", err)
+		return nil, fmt.Errorf("encrypt error: %w", err)
 	}
 
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
-		return nil, fmt.Errorf("encode error: %w", err)
+		return nil, fmt.Errorf("encrypt error: %w", err)
 	}
 
 	nonce := make([]byte, gcm.NonceSize())
 	_, err = rand.Read(nonce)
 	if err != nil {
-		return nil, fmt.Errorf("encode error: %w", err)
+		return nil, fmt.Errorf("encrypt error: %w", err)
 	}
 
-	encoded := gcm.Seal(nil, nonce, []byte(plain), nil)
-	encoded = append(nonce, encoded...)
-	return encoded, nil
+	encrypted := gcm.Seal(nil, nonce, []byte(plain), nil)
+	encrypted = append(nonce, encrypted...)
+	return encrypted, nil
 }
 
-// decode は encoded をデコードします。
-func (a *Atnd) decode(encoded []byte) (string, error) {
+// decrypt は encrypted をデコードします。
+func (a *Atnd) decrypt(encrypted []byte) (string, error) {
 	block, err := aes.NewCipher(a.encKey)
 	if err != nil {
-		return "", fmt.Errorf("decode error: %w", err)
+		return "", fmt.Errorf("decrypt error: %w", err)
 	}
 
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
-		return "", fmt.Errorf("decode error: %w", err)
+		return "", fmt.Errorf("decrypt error: %w", err)
 	}
 
-	nonce := encoded[:gcm.NonceSize()]
-	plain, err := gcm.Open(nil, nonce, encoded[gcm.NonceSize():], nil)
+	nonce := encrypted[:gcm.NonceSize()]
+	plain, err := gcm.Open(nil, nonce, encrypted[gcm.NonceSize():], nil)
 	if err != nil {
-		return "", fmt.Errorf("decode error: %w", err)
+		return "", fmt.Errorf("decrypt error: %w", err)
 	}
 
 	return string(plain), nil
@@ -395,7 +395,7 @@ func (a *Atnd) SetMember(name, addr string) error {
 		return InvalidMACAddressError{Address: addr}
 	}
 
-	encodedAddr, err := a.encode(addr)
+	encryptedAddr, err := a.encrypt(addr)
 	if err != nil {
 		return fmt.Errorf("set member error: %w", err)
 	}
@@ -412,9 +412,9 @@ func (a *Atnd) SetMember(name, addr string) error {
 	}
 
 	if found {
-		a.updateMember(name, encodedAddr)
+		a.updateMember(name, encryptedAddr)
 	} else {
-		a.addMember(name, encodedAddr)
+		a.addMember(name, encryptedAddr)
 	}
 
 	if err := a.dumpConfig(); err != nil {
@@ -425,16 +425,16 @@ func (a *Atnd) SetMember(name, addr string) error {
 }
 
 // addMember はメンバー情報を追加します。
-func (a *Atnd) addMember(name string, encodedAddr []byte) {
-	newMember := member{Name: name, EncodedAddress: encodedAddr}
+func (a *Atnd) addMember(name string, encryptedAddr []byte) {
+	newMember := member{Name: name, EncryptedAddress: encryptedAddr}
 	a.config.Members = append(a.config.Members, &newMember)
 }
 
 // updateMember は name の addr を変更します。
-func (a *Atnd) updateMember(name string, encodedAddr []byte) {
+func (a *Atnd) updateMember(name string, encryptedAddr []byte) {
 	for i := range a.config.Members {
 		if a.config.Members[i].Name == name {
-			a.config.Members[i].EncodedAddress = encodedAddr
+			a.config.Members[i].EncryptedAddress = encryptedAddr
 			return
 		}
 	}
@@ -490,11 +490,11 @@ func (a *Atnd) Search() ([]*Attendance, error) {
 
 // SearchMemberContext はひとりのメンバーをサーチします。いなかったら nil です。
 func (a *Atnd) SearchMemberContext(ctx context.Context, name string) (*Attendance, error) {
-	encodedAddr, err := a.findAddr(name)
+	encryptedAddr, err := a.findAddr(name)
 	if err != nil {
 		return nil, fmt.Errorf("search member failed: %w", err)
 	}
-	addr, err := a.decode(encodedAddr)
+	addr, err := a.decrypt(encryptedAddr)
 	if err != nil {
 		return nil, fmt.Errorf("search member failed: %w", err)
 	}
@@ -528,7 +528,7 @@ func (a *Atnd) findAddr(name string) ([]byte, error) {
 
 	for _, mem := range a.config.Members {
 		if mem.Name == name {
-			return mem.EncodedAddress, nil
+			return mem.EncryptedAddress, nil
 		}
 	}
 
@@ -590,8 +590,8 @@ func newConfig() *config {
 
 // member は設定ファイルのメンバーを表します。
 type member struct {
-	Name           string `json:"name"`            // 表示名です。
-	EncodedAddress []byte `json:"encoded_address"` // 暗号化された Bluetooth アドレスです。
+	Name             string `json:"name"`              // 表示名です。
+	EncryptedAddress []byte `json:"encrypted_address"` // 暗号化された Bluetooth アドレスです。
 }
 
 // Attendance はそのメンバーの最後に出席した時間を表します。
