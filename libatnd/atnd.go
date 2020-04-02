@@ -205,7 +205,7 @@ func (a *Atnd) createConfigFile() error {
 		return fmt.Errorf("cannot create config file: %w", err)
 	}
 
-	if err := ioutil.WriteFile(a.confPath, bytes, configPerm); err != nil {
+	if err := ioutil.WriteFile(a.confPath, append(bytes, '\n'), configPerm); err != nil {
 		return fmt.Errorf("cannot create config file: %w", err)
 	}
 
@@ -235,7 +235,7 @@ func (a *Atnd) dumpConfig() error {
 		return fmt.Errorf("dump config error: %w", err)
 	}
 
-	if err := ioutil.WriteFile(a.confPath, bytes, configPerm); err != nil {
+	if err := ioutil.WriteFile(a.confPath, append(bytes, '\n'), configPerm); err != nil {
 		return fmt.Errorf("dump config error: %w", err)
 	}
 
