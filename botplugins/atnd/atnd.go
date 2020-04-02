@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/high-moctane/milbot/libatnd"
 	"github.com/slack-go/slack"
@@ -207,39 +208,116 @@ func (p *Plugin) isAtndQuery(ev *slack.MessageEvent) bool {
 }
 
 func (p *Plugin) serveAtnd(ctx context.Context, event *slack.MessageEvent) error {
-	attendances, err := p.atnd.SearchContext(ctx)
-	if errors.Is(err, libatnd.ErrBluetoothNotAvailable) {
-		_, _, _, err := p.client.SendMessageContext(
-			ctx,
-			event.Channel,
-			slack.MsgOptionText("Bluetooth が死んでます (´; ω ;｀)", true),
-		)
-		if err != nil {
-			return fmt.Errorf("serve atnd error: %w", err)
-		}
-		return nil
-	} else if err != nil {
+	if err := p.sendHistoryMessage(ctx, event.Channel); err != nil {
 		return fmt.Errorf("serve atnd error: %w", err)
 	}
 
-	msg := new(strings.Builder)
-
-	msg.WriteString("現在\n")
-	for _, attendance := range attendances {
-		msg.WriteString(fmt.Sprintf("%s, %s", attendance.Name, attendance.Time.String()))
-	}
-	msg.WriteString("がいます (｀･ω･´)")
-
-	_, _, _, err = p.client.SendMessageContext(
-		ctx,
-		event.Channel,
-		slack.MsgOptionText(msg.String(), true),
-	)
-	if err != nil {
+	// あらためて在室確認する。
+	if err := p.sendAttendanceMessage(ctx, event.Channel); err != nil {
 		return fmt.Errorf("serve atnd error: %w", err)
 	}
 
 	return nil
+}
+
+// sendHistoryMessage でこれまでの在室履歴を送信します。
+func (p *Plugin) sendHistoryMessage(ctx context.Context, channel string) error {
+	history := p.atnd.Status()
+	_, _, _, err := p.client.SendMessageContext(
+		ctx,
+		channel,
+		slack.MsgOptionText(p.historyMessage(history), true),
+	)
+	if err != nil {
+		return fmt.Errorf("send history message failed: %w", err)
+	}
+	return nil
+}
+
+// historyMessage は在室履歴のメッセージを構築します。
+func (p *Plugin) historyMessage(history []*libatnd.Attendance) string {
+	if len(history) == 0 {
+		return "Bot を起動してから誰も在室していないようです (´･ω･｀)"
+	}
+
+	msg := new(strings.Builder)
+	msg.WriteString("これまでの在室履歴は\n")
+	now := time.Now()
+	for _, mem := range history {
+		msg.WriteString(fmt.Sprintf("%s: %s\n", mem.Name, p.timeDiffFormat(now, mem.Time)))
+	}
+	msg.WriteString("です (｀･ω･´)")
+
+	return msg.String()
+}
+
+// timeDiffFormat はt と now の差をわかりやすいフォーマットに変換します。
+func (*Plugin) timeDiffFormat(now, t time.Time) string {
+	duration := now.Sub(t)
+
+	if duration.Hours() >= 24.0 {
+		return fmt.Sprintf("%.0f 日前", duration.Hours()/24.0)
+	} else if duration.Hours() >= 1.0 {
+		return fmt.Sprintf("%.0f 時間前", duration.Hours())
+	} else if duration.Minutes() >= 1.0 {
+		return fmt.Sprintf("%.0f 分前", duration.Minutes())
+	}
+	return fmt.Sprintf("%.0f 秒前", duration.Seconds())
+}
+
+// sendAttendanceMessage は現在の在室状況を送信します。
+func (p *Plugin) sendAttendanceMessage(ctx context.Context, channel string) error {
+	_, _, _, err := p.client.SendMessageContext(
+		ctx,
+		channel,
+		slack.MsgOptionText("在室確認します。しばらくお待ちください……(｀･ω･´)", true),
+	)
+	if err != nil {
+		return fmt.Errorf("send attendance message failed: %w", err)
+	}
+
+	attendance, err := p.atnd.SearchContext(ctx)
+	if errors.Is(err, libatnd.ErrBluetoothNotAvailable) {
+		_, _, _, err := p.client.SendMessageContext(
+			ctx,
+			channel,
+			slack.MsgOptionText("Bluetooth が死んでます (´; ω ;｀)", true),
+		)
+		if err != nil {
+			return fmt.Errorf("send attendance message failed: %w", err)
+		}
+		return nil
+	} else if err != nil {
+		return fmt.Errorf("send attendance message failed: %w", err)
+	}
+
+	_, _, _, err = p.client.SendMessageContext(
+		ctx,
+		channel,
+		slack.MsgOptionText(p.attendanceMessage(attendance), true),
+	)
+	if err != nil {
+		return fmt.Errorf("send attendance message failed: %w", err)
+	}
+
+	return nil
+}
+
+// attendanceMessage は出席している人のメッセージを返します。
+func (*Plugin) attendanceMessage(attendance []*libatnd.Attendance) string {
+	if len(attendance) == 0 {
+		return "現在研究室には誰もいません (´･ω･｀)"
+	}
+
+	msg := new(strings.Builder)
+	msg.WriteString("現在研究室には\n")
+	for _, mem := range attendance {
+		msg.WriteString(mem.Name)
+		msg.WriteString("\n")
+	}
+	msg.WriteString("が在室しています (｀･ω･´)")
+
+	return msg.String()
 }
 
 // Stop でプラグインの終了処理をします。

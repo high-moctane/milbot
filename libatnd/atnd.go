@@ -18,6 +18,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/robfig/cron/v3"
 )
 
 // configFileName はメンバーのアドレスを保管しておくファイルの名前です。
@@ -31,6 +33,9 @@ const encKeyFileName = ".atnd_key"
 
 // encKeyPerm は暗号化キーファイルのパーミッションです。
 const encKeyPerm = 0600
+
+// cronSearchSchedule は cron で Search をするスケジュールです。
+const cronSearchSchedule = "*/5 * * * *"
 
 // atnd は Atnd のシングルトンです。
 var atnd *Atnd
@@ -121,6 +126,8 @@ type Atnd struct {
 	// Search は同時に実行できないのでセマフォを使います。
 	semaSearch       chan struct{}
 	semaSearchMember chan struct{}
+
+	cron *cron.Cron
 }
 
 // Instance はシングルトンの Atnd を返します。
@@ -150,7 +157,20 @@ func newAtnd() (*Atnd, error) {
 	a.semaSearch = make(chan struct{}, 1)
 	a.semaSearchMember = make(chan struct{}, 1)
 
+	a.cron = cron.New()
+	a.addCronSearch()
+	a.cron.Start()
+
 	return a, nil
+}
+
+// addCronSearch は定時でサーチするジョブを追加します
+func (a *Atnd) addCronSearch() {
+	a.cron.AddFunc(cronSearchSchedule, func() {
+		if _, err := a.Search(); err != nil {
+			log.Print(err)
+		}
+	})
 }
 
 // initConfig は必要であれば config ファイルを生成して a.config を初期化します。
@@ -469,7 +489,12 @@ func (a *Atnd) SearchContext(ctx context.Context) ([]*Attendance, error) {
 	case a.semaSearch <- struct{}{}:
 		defer func() { <-a.semaSearch }()
 
-		for _, mem := range a.config.Members {
+		a.muConfig.RLock()
+		members := make([]*member, len(a.config.Members))
+		copy(members, a.config.Members)
+		a.muConfig.RUnlock()
+
+		for _, mem := range members {
 			attendance, err := a.SearchMemberContext(ctx, mem.Name)
 			if err != nil {
 				return nil, fmt.Errorf("search failed: %w", err)
