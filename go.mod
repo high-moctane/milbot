@@ -1,14 +1,13 @@
 module github.com/high-moctane/milbot
 
-go 1.12
+go 1.14
 
 require (
-	github.com/go-redis/redis v6.15.2+incompatible
-	github.com/gorilla/websocket v1.4.1 // indirect
-	github.com/ikawaha/kagome v1.10.0
+	github.com/PuerkitoBio/goquery v1.5.1
+	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/joho/godotenv v1.3.0
-	github.com/nlopes/slack v0.5.0
-	github.com/pkg/errors v0.8.1 // indirect
-	golang.org/x/net v0.0.0-20190813141303-74dc4d7220e7
+	github.com/robfig/cron/v3 v3.0.1
+	github.com/slack-go/slack v0.6.3
+	github.com/stretchr/testify v1.5.1 // indirect
 	golang.org/x/text v0.3.2
 )
