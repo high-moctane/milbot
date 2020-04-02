@@ -1,9 +1,0 @@
-libatnd はドキュメントをきれいにする。
-
-json の最後に改行
-
-Makefile の準備
-
-.atnd_config.json
-
-ctx をキャンセルする
