@@ -13,15 +13,17 @@ import (
 	"github.com/high-moctane/milbot/botplugins/exit"
 	"github.com/high-moctane/milbot/botplugins/kitakunoki"
 	"github.com/high-moctane/milbot/botplugins/ping"
+	"github.com/high-moctane/milbot/botplugins/restart"
 	_ "github.com/joho/godotenv/autoload"
 )
 
 // plugins にプラグインを入れていくぞ(｀･ω･´)！
 var plugins = []botplugin.Plugin{
-	ping.New(),
-	exit.New(),
 	atnd.New(),
+	exit.New(),
 	kitakunoki.New(),
+	ping.New(),
+	restart.New(),
 }
 
 func main() {
