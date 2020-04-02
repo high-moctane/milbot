@@ -1,0 +1,16 @@
+[Unit]
+Description=Milbot
+Documentation=https://github.com/high-moctane/milbot/README.md
+Requires=bluetooth.target
+After=syslog.target
+After=bluetooth.target
+
+[Service]
+WorkingDirectory=/home/pi/milbot
+ExecStart=/home/pi/milbot/milbot-raspi
+Restart=on-failure
+StartLimitInterval=600
+StartLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target

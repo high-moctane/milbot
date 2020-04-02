@@ -3,7 +3,7 @@
 build:
 	go build -o milbot
 
-run: milbot
+run: build
 	./milbot
 
 clean:
@@ -12,6 +12,3 @@ clean:
 
 raspi:
 	GOOS=linux GOARCH=arm GOARM=6 go build -o milbot-raspi
-
-
-
