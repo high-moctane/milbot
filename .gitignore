@@ -1,6 +1,6 @@
 /milbot
 /milbot.exe
-/milbot-linux
+/milbot-raspi
 /.env
 /atnd_config.json
 /.atnd_key
