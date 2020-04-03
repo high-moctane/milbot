@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"time"
 
@@ -42,6 +43,10 @@ func (b *Bot) Serve(ctx context.Context) error {
 	}
 	b.client = client
 
+	if err := b.auth(); err != nil {
+		return fmt.Errorf("bot run failed: %w", err)
+	}
+
 	if err := b.startPlugins(); err != nil {
 		return fmt.Errorf("bot run failed: %w", err)
 	}
@@ -49,6 +54,24 @@ func (b *Bot) Serve(ctx context.Context) error {
 		return fmt.Errorf("bot run failed: %w", err)
 	}
 	return nil
+}
+
+// auth は接続確認をします。ネットが繋がっていない場合はつながるまで待ちます。
+func (b *Bot) auth() error {
+	var wait time.Duration = 1
+	for wait > 0 {
+		_, err := b.client.AuthTest()
+		var urlErr *url.Error
+		if errors.As(err, &urlErr) {
+			time.Sleep(wait * time.Second)
+			wait *= 2
+			continue
+		} else if err != nil {
+			return fmt.Errorf("auth error: %w", err)
+		}
+		return nil
+	}
+	return errors.New("auth timeout")
 }
 
 // launchSlack で Slack のクライアントを起動します。
