@@ -24,7 +24,7 @@ Raspberry Pi を電源に差し込むと自動で起動します。
 - `milbot exit` コマンドを送ると bot が終了します。
 
 - Raspberry Pi 上で以下のコマンドを実行します。
-    ```bash
+    ```
     # systemctl stop milbot
     ```
 
@@ -60,20 +60,11 @@ Milbot は Raspberry Pi 上で動かすことを前提としています。
 
 `tmux` を Raspbian にインストールしておくと楽です。
 
-### ネットワークを起動させてから bot を起動するようにするための操作
-
-以下のコマンドを実行します。
-
-```
-# systemctl enable systemd-networkd
-# systemctl enable systemd-networkd-wait-online
-```
-
 ### 実行ファイルのビルド
 
 以下のコマンドを使って Raspberry Pi 用の実行ファイルをビルドします。
 
-```bash
+```
 $ make raspi
 ```
 
@@ -87,7 +78,7 @@ $ make raspi
 以下のコマンドを実行して Raspberry Pi が起動したときに bot も起動するように
 設定します。
 
-```bash
+```
 # wget -P /etc/systemd/system/ https://raw.githubusercontent.com/high-moctane/milbot/master/milbot.service
 # systemctl enable milbot
 ```
